@@ -1,4 +1,8 @@
-﻿using System;
+﻿// https://www.ietf.org/rfc/rfc1928.txt
+// https://tools.ietf.org/html/rfc1929
+// https://gitweb.torproject.org/torspec.git/plain/socks-extensions.txt
+
+using System;
 using System.Threading.Tasks;
 
 namespace Socks5ProtocolTinkering
