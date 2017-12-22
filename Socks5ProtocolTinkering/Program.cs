@@ -5,10 +5,10 @@ namespace Socks5ProtocolTinkering
 {
     class Program
     {
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        static async Task Main(string[] args)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-        {
+#pragma warning disable IDE1006 // Naming Styles
+		static async Task Main(string[] args)
+#pragma warning restore IDE1006 // Naming Styles
+		{
             Console.WriteLine("Hello World!");
         }
     }
