@@ -3,6 +3,7 @@
 // https://gitweb.torproject.org/torspec.git/plain/socks-extensions.txt
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Socks5ProtocolTinkering
@@ -13,7 +14,13 @@ namespace Socks5ProtocolTinkering
 		static async Task Main(string[] args)
 #pragma warning restore IDE1006 // Naming Styles
 		{
-            Console.WriteLine("Hello World!");
+			for (int i = 0; i < 100; i++)
+			{
+				var b = (byte)i;
+				Console.WriteLine((int)b);
+			}
+
+			Console.ReadLine();
         }
     }
 }

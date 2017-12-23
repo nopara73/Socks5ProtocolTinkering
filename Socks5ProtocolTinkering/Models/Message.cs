@@ -9,11 +9,11 @@ namespace Socks5ProtocolTinkering.Models
 	{
 		#region PropertiesAndMembers
 
-		private byte[] Bytes { get; }
+		protected byte[] Bytes { get; }
 
 		#endregion
 
-		#region Constructors
+		#region ConstructorsAndInitializers
 
 		public Message(params byte[] bytes)
 		{
@@ -22,7 +22,7 @@ namespace Socks5ProtocolTinkering.Models
 
 		#endregion
 
-		#region Methods
+		#region Serialization
 
 		public byte[] ToBytes() => Bytes;
 
@@ -30,7 +30,7 @@ namespace Socks5ProtocolTinkering.Models
 
 		#endregion
 
-		#region Equality
+		#region EqualityAndComparison
 
 		public override bool Equals(object obj) => obj is Message && this == (Message)obj;
 		public bool Equals(Message other) => this == other;
