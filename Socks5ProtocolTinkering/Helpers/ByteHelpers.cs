@@ -6,6 +6,8 @@ namespace System
 {
     public static class ByteHelpers
     {
+		// Fastest byte array comparison in C#
+		// https://stackoverflow.com/a/8808245/2061103
 		// Copyright (c) 2008-2013 Hafthor Stefansson
 		// Distributed under the MIT/X11 software license
 		// Ref: http://www.opensource.org/licenses/mit-license.php.
@@ -25,6 +27,42 @@ namespace System
 				if ((l & 1) != 0) if (*((byte*)x1) != *((byte*)x2)) return false;
 				return true;
 			}
+		}
+
+		// Fastest byte array to hex implementation in C#
+		// https://stackoverflow.com/a/5919521/2061103
+		// https://stackoverflow.com/a/10048895/2061103
+		public static string ToHex(params byte[] bytes)
+		{
+			var result = new StringBuilder(bytes.Length * 2);
+			var hexAlphabet = "0123456789ABCDEF";
+
+			foreach (byte b in bytes)
+			{
+				result.Append(hexAlphabet[b >> 4]);
+				result.Append(hexAlphabet[b & 0xF]);
+			}
+
+			return result.ToString();
+		}
+
+		// Fastest hex to byte array implementation in C#
+		// https://stackoverflow.com/a/5919521/2061103
+		// https://stackoverflow.com/a/10048895/2061103
+		public static byte[] GetBytes(string hex)
+		{
+			var bytes = new byte[hex.Length / 2];
+			var hexValue = new int[] { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+	   0x06, 0x07, 0x08, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	   0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+
+			for (int x = 0, i = 0; i < hex.Length; i += 2, x += 1)
+			{
+				bytes[x] = (byte)(hexValue[char.ToUpper(hex[i + 0]) - '0'] << 4 |
+								  hexValue[char.ToUpper(hex[i + 1]) - '0']);
+			}
+
+			return bytes;
 		}
 	}
 }

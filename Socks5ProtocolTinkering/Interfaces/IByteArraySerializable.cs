@@ -8,5 +8,7 @@ namespace Socks5ProtocolTinkering.Interfaces
     {
 		byte[] ToBytes();
 		void FromBytes(params byte[] bytes);
-    }
+		string ToHex();
+		void FromHex(string hex);
+	}
 }
