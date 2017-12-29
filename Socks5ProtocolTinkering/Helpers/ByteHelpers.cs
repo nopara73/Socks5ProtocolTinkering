@@ -1,25 +1,69 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace System
 {
     public static class ByteHelpers
     {
-		// Fastest byte array comparison in C#
+		public static void AssertRange(string hex, string lowerHex, string upperHex)
+		{
+			if (string.IsNullOrWhiteSpace(hex))
+			{
+				throw new ArgumentException(hex);
+			}
+			if (string.IsNullOrWhiteSpace(lowerHex))
+			{
+				throw new ArgumentException(lowerHex);
+			}
+			if (string.IsNullOrWhiteSpace(upperHex))
+			{
+				throw new ArgumentException(upperHex);
+			}
+
+			var current = int.Parse(hex, NumberStyles.HexNumber);
+			var lower = int.Parse(lowerHex, NumberStyles.HexNumber);
+			var upper = int.Parse(upperHex, NumberStyles.HexNumber);
+			if (current < lower || current > upper)
+			{
+				throw new ArgumentOutOfRangeException(nameof(hex));
+			}
+		}
+
+		// https://stackoverflow.com/questions/415291/best-way-to-combine-two-or-more-byte-arrays-in-c-sharp
+		/// <summary>
+		/// Fastest byte array concatenation in C#
+		/// </summary>
+		public static byte[] Combine(params byte[][] arrays)
+		{
+			byte[] ret = new byte[arrays.Sum(x => x.Length)];
+			int offset = 0;
+			foreach (byte[] data in arrays)
+			{
+				Buffer.BlockCopy(data, 0, ret, offset, data.Length);
+				offset += data.Length;
+			}
+			return ret;
+		}
+
 		// https://stackoverflow.com/a/8808245/2061103
 		// Copyright (c) 2008-2013 Hafthor Stefansson
 		// Distributed under the MIT/X11 software license
 		// Ref: http://www.opensource.org/licenses/mit-license.php.
-		public static unsafe bool CompareFastUnsafe(byte[] a1, byte[] a2)
+		/// <summary>
+		/// Fastest byte array comparison in C#
+		/// </summary>
+		public static unsafe bool CompareFastUnsafe(byte[] array1, byte[] array2)
 		{
-			if (a1 == a2) return true;
-			if (a1 == null || a2 == null || a1.Length != a2.Length)
+			if (array1 == array2) return true;
+			if (array1 == null || array2 == null || array1.Length != array2.Length)
 				return false;
-			fixed (byte* p1 = a1, p2 = a2)
+			fixed (byte* p1 = array1, p2 = array2)
 			{
 				byte* x1 = p1, x2 = p2;
-				int l = a1.Length;
+				int l = array1.Length;
 				for (int i = 0; i < l / 8; i++, x1 += 8, x2 += 8)
 					if (*((long*)x1) != *((long*)x2)) return false;
 				if ((l & 4) != 0) { if (*((int*)x1) != *((int*)x2)) return false; x1 += 4; x2 += 4; }
@@ -29,9 +73,11 @@ namespace System
 			}
 		}
 
-		// Fastest byte array to hex implementation in C#
 		// https://stackoverflow.com/a/5919521/2061103
 		// https://stackoverflow.com/a/10048895/2061103
+		/// <summary>
+		/// Fastest byte array to hex implementation in C#
+		/// </summary>
 		public static string ToHex(params byte[] bytes)
 		{
 			var result = new StringBuilder(bytes.Length * 2);
@@ -46,9 +92,11 @@ namespace System
 			return result.ToString();
 		}
 
-		// Fastest hex to byte array implementation in C#
 		// https://stackoverflow.com/a/5919521/2061103
 		// https://stackoverflow.com/a/10048895/2061103
+		/// <summary>
+		/// Fastest hex to byte array implementation in C#
+		/// </summary>
 		public static byte[] FromHex(string hex)
 		{
 			if (string.IsNullOrWhiteSpace(hex)) throw new ArgumentException(nameof(hex));
