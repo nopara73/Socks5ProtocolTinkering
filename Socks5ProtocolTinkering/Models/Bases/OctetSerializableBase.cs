@@ -32,9 +32,17 @@ namespace Socks5ProtocolTinkering.Models.Bases
 
 		public void FromHex(string hex)
 		{
-			if (hex == null) throw new ArgumentNullException(nameof(hex));
+			if (hex == null)
+			{
+				throw new ArgumentNullException(nameof(hex));
+			}
+
 			byte[] bytes = ByteHelpers.FromHex(hex);
-			if (bytes.Length != 1) throw new ArgumentException(nameof(hex));
+			if (bytes.Length != 1)
+			{
+				throw new ArgumentException(nameof(hex));
+			}
+
 			ByteValue = bytes[0];
 		}
 

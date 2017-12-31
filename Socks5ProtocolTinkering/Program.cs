@@ -5,6 +5,7 @@
 using Socks5ProtocolTinkering.Models;
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Socks5ProtocolTinkering
@@ -15,6 +16,12 @@ namespace Socks5ProtocolTinkering
 		static async Task Main(string[] args)
 #pragma warning restore IDE1006 // Naming Styles
 		{
+			using (var client = new TorSocks5Client(new IPEndPoint(IPAddress.Loopback, 9050)))
+			{
+				await client.ConnectAsync();
+				Console.WriteLine(client.IsConnected);
+			}
+
 			Console.ReadLine();
         }
     }

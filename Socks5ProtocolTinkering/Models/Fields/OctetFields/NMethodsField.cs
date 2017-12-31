@@ -22,7 +22,11 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 
 		public NMethodsField(int value)
 		{
-			if (value > 255) throw new ArgumentOutOfRangeException(nameof(value));
+			if (value > 255)
+			{
+				throw new ArgumentOutOfRangeException(nameof(value));
+			}
+
 			ByteValue = (byte)value;
 		}
 

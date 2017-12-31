@@ -1,19 +1,85 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Socks5ProtocolTinkering
 {
-    public class TorSocks5Client : IDisposable
-    {
-		#region ConstructorsAndInitializers
+	public class TorSocks5Client : IDisposable
+	{
+		#region PropertiesAndMembers
 
-		public TorSocks5Client()
+		public TcpClient TcpClient { get; private set; }
+
+		public IPEndPoint EndPoint { get; private set; }
+
+		public bool IsConnected
 		{
+			get
+			{
+				try
+				{
+					if (TcpClient == null || TcpClient.GetStream() == null)
+					{
+						return false;
+					}
 
+					return TcpClient.Connected;
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine(ex);
+					return false;
+				}
+			}
 		}
 
+		private AsyncLock AsyncLock { get; }
+
+		#endregion
+
+		#region ConstructorsAndInitializers
+
+		public TorSocks5Client(IPEndPoint endPoint)
+		{
+			EndPoint = endPoint ?? throw new ArgumentNullException(nameof(endPoint));
+			TcpClient = new TcpClient();
+			AsyncLock = new AsyncLock();
+		}
+
+		public async Task ConnectAsync()
+		{
+			using (await AsyncLock.LockAsync())
+			{
+				await TcpClient.ConnectAsync(EndPoint.Address, EndPoint.Port).ConfigureAwait(false);
+			}
+		}
+
+		public async Task HandshakeAsync()
+		{
+			using (await AsyncLock.LockAsync())
+			{
+				AssertConnected();
+
+				var stream = TcpClient.GetStream();
+			}
+		}
+
+		public void AssertConnected()
+		{
+			if (!IsConnected)
+			{
+				throw new Exception($"{nameof(TorSocks5Client)} is not connected");
+			}
+		}
+
+		#endregion
+
 		#region IDisposable Support
+
 		private bool _disposedValue = false; // To detect redundant calls
 
 		protected virtual void Dispose(bool disposing)
@@ -22,7 +88,7 @@ namespace Socks5ProtocolTinkering
 			{
 				if (disposing)
 				{
-					// TODO: dispose managed state (managed objects).
+					DisposeTcpClient();
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
@@ -46,7 +112,22 @@ namespace Socks5ProtocolTinkering
 			// TODO: uncomment the following line if the finalizer is overridden above.
 			// GC.SuppressFinalize(this);
 		}
-		#endregion
+
+		public void DisposeTcpClient()
+		{
+			try
+			{
+				TcpClient?.Dispose();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex);
+			}
+			finally
+			{
+				TcpClient = null; // need to be called, .net bug
+			}
+		}
 
 		#endregion
 	}

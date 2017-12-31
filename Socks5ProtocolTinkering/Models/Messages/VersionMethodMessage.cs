@@ -34,8 +34,9 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 			// The NMETHODS field contains the number of method identifier octets that appear in the METHODS field.
 			if(methodsField.ToBytes().Length != nMethodsField.Value)
-
-			Methods = methodsField ?? throw new ArgumentNullException(nameof(methodsField));
+			{
+				Methods = methodsField ?? throw new ArgumentNullException(nameof(methodsField));
+			}
 		}
 
 		#endregion
@@ -44,8 +45,15 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public override void FromBytes(byte[] bytes)
 		{
-			if (bytes == null) throw new ArgumentNullException(nameof(bytes));
-			if (bytes.Length < 3 || bytes.Length > 257) throw new ArgumentOutOfRangeException(nameof(bytes));
+			if (bytes == null)
+			{
+				throw new ArgumentNullException(nameof(bytes));
+			}
+
+			if (bytes.Length < 3 || bytes.Length > 257)
+			{
+				throw new ArgumentOutOfRangeException(nameof(bytes));
+			}
 
 			Ver = new VerField();
 			Ver.FromByte(bytes[0]);

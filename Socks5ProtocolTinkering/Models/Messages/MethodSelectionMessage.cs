@@ -35,8 +35,15 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public override void FromBytes(byte[] bytes)
 		{
-			if (bytes == null) throw new ArgumentNullException(nameof(bytes));
-			if (bytes.Length != 2) throw new ArgumentOutOfRangeException(nameof(bytes));
+			if (bytes == null)
+			{
+				throw new ArgumentNullException(nameof(bytes));
+			}
+
+			if (bytes.Length != 2)
+			{
+				throw new ArgumentOutOfRangeException(nameof(bytes));
+			}
 
 			Ver = new VerField();
 			Ver.FromByte(bytes[0]);

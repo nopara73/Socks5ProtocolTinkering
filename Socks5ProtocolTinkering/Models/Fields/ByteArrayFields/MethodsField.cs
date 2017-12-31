@@ -99,7 +99,11 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public override void FromBytes(byte[] bytes)
 		{
-			if(bytes == null) throw new ArgumentNullException(nameof(bytes));
+			if(bytes == null)
+			{
+				throw new ArgumentNullException(nameof(bytes));
+			}
+
 			var hex = ByteHelpers.ToHex(bytes);
 			ByteHelpers.AssertRange(hex, "00", "FF"); // Works for Socks 5
 			Bytes = bytes;

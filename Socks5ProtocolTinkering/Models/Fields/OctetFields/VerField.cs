@@ -29,7 +29,11 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 
 		public VerField(int value)
 		{
-			if (value > 255) throw new ArgumentOutOfRangeException(nameof(value));
+			if (value > 255)
+			{
+				throw new ArgumentOutOfRangeException(nameof(value));
+			}
+
 			ByteValue = (byte)value;
 		}
 
