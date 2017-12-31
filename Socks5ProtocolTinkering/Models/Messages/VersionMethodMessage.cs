@@ -27,16 +27,15 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		}
 
-		public VersionMethodMessage(VerField verField, NMethodsField nMethodsField, MethodsField methodsField)
+		public VersionMethodMessage(VerField verField, MethodsField methodsField)
 		{
 			Ver = verField ?? throw new ArgumentNullException(nameof(verField));
-			NMethods = nMethodsField ?? throw new ArgumentNullException(nameof(nMethodsField));
+			Methods = methodsField ?? throw new ArgumentNullException(nameof(methodsField));
 
 			// The NMETHODS field contains the number of method identifier octets that appear in the METHODS field.
-			if(methodsField.ToBytes().Length != nMethodsField.Value)
-			{
-				Methods = methodsField ?? throw new ArgumentNullException(nameof(methodsField));
-			}
+			var nMethods = new NMethodsField();
+			nMethods.FromMethodsField(methodsField);
+			NMethods = nMethods;
 		}
 
 		#endregion

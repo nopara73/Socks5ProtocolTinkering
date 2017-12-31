@@ -1,4 +1,5 @@
 ﻿using Socks5ProtocolTinkering.Models.Bases;
+using Socks5ProtocolTinkering.Models.Fields.ByteArrayFields;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,6 +29,15 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			}
 
 			ByteValue = (byte)value;
+		}
+
+		#endregion
+
+		#region Serialization
+		
+		public void FromMethodsField(MethodsField methods)
+		{
+			ByteValue = (byte)methods.ToBytes().Length;
 		}
 
 		#endregion

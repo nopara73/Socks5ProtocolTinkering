@@ -1,4 +1,8 @@
 ﻿using Nito.AsyncEx;
+using Socks5ProtocolTinkering.Models;
+using Socks5ProtocolTinkering.Models.Fields.ByteArrayFields;
+using Socks5ProtocolTinkering.Models.Fields.OctetFields;
+using Socks5ProtocolTinkering.Models.Messages;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -58,13 +62,53 @@ namespace Socks5ProtocolTinkering
 			}
 		}
 
-		public async Task HandshakeAsync()
+		public async Task HandshakeAsync(string username = null, string password = null)
 		{
 			using (await AsyncLock.LockAsync())
 			{
 				AssertConnected();
 
 				var stream = TcpClient.GetStream();
+
+				var ver = VerField.Socks5;
+				MethodsField methods;
+				if (username == null && password == null)
+				{
+					methods = new MethodsField(MethodField.NoAuthenticationRequired);
+				}
+				else
+				{
+					if (username == null)
+					{
+						username = ""; // does Tor works with empty username?
+					}
+					if(password == null)
+					{
+						password = ""; // does Tor works with empty password?
+					}
+					methods = new MethodsField(MethodField.NoAuthenticationRequired, MethodField.UsernamePassword);
+				}
+
+				var sendBuffer = new VersionMethodMessage(ver, methods).ToBytes();
+				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
+				await stream.FlushAsync().ConfigureAwait(false);
+
+				var receiveBuffer = new byte[2];
+				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
+				if (receiveCount <= 0)
+				{
+					throw new InvalidOperationException("Not connected to Tor SOCKS port");
+				}
+				var methodSelection = new MethodSelectionMessage();
+				methodSelection.FromBytes(receiveBuffer);
+				if(methodSelection.Ver != VerField.Socks5)
+				{
+					throw new InvalidOperationException($"SOCKS{methodSelection.Ver.Value} is not supported. Only SOCKS5 is supported");
+				}
+				if(methodSelection.Method == MethodField.NoAcceptableMethods)
+				{
+					throw new InvalidOperationException("The SOCKS5 proxy does not support any of the client's authentication methods.");
+				}
 			}
 		}
 
