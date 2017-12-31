@@ -107,6 +107,10 @@ namespace Socks5ProtocolTinkering
 				}
 				if(methodSelection.Method == MethodField.NoAcceptableMethods)
 				{
+					// https://www.ietf.org/rfc/rfc1928.txt
+					// If the selected METHOD is X'FF', none of the methods listed by the
+					// client are acceptable, and the client MUST close the connection.
+					DisposeTcpClient();
 					throw new InvalidOperationException("The SOCKS5 proxy does not support any of the client's authentication methods.");
 				}
 			}
