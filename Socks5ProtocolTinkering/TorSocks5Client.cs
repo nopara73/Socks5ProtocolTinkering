@@ -78,18 +78,18 @@ namespace Socks5ProtocolTinkering
 				}
 				else
 				{
-					if (username == null)
+					if (string.IsNullOrEmpty(username))
 					{
-						username = ""; // does Tor works with empty username?
+						throw new ArgumentException(nameof(username));
 					}
-					if(password == null)
+					if (string.IsNullOrEmpty(password))
 					{
-						password = ""; // does Tor works with empty password?
+						throw new ArgumentException(nameof(password));
 					}
 					methods = new MethodsField(MethodField.NoAuthenticationRequired, MethodField.UsernamePassword);
 				}
 
-				var sendBuffer = new VersionMethodMessage(ver, methods).ToBytes();
+				var sendBuffer = new VersionMethodRequest(ver, methods).ToBytes();
 				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
 				await stream.FlushAsync().ConfigureAwait(false);
 
@@ -99,7 +99,7 @@ namespace Socks5ProtocolTinkering
 				{
 					throw new InvalidOperationException("Not connected to Tor SOCKS port");
 				}
-				var methodSelection = new MethodSelectionMessage();
+				var methodSelection = new MethodSelectionResponse();
 				methodSelection.FromBytes(receiveBuffer);
 				if(methodSelection.Ver != VerField.Socks5)
 				{
@@ -112,6 +112,44 @@ namespace Socks5ProtocolTinkering
 					// client are acceptable, and the client MUST close the connection.
 					DisposeTcpClient();
 					throw new InvalidOperationException("The SOCKS5 proxy does not support any of the client's authentication methods.");
+				}
+				if(methodSelection.Method == MethodField.UsernamePassword)
+				{
+					// https://tools.ietf.org/html/rfc1929#section-2
+					// Once the SOCKS V5 server has started, and the client has selected the
+					// Username / Password Authentication protocol, the Username / Password
+					// subnegotiation begins.  This begins with the client producing a
+					// Username / Password request:
+					var authVer = AuthVerField.Version1;
+					var uName = new UNameField(username);
+					var passwd = new PasswdField(password);
+					sendBuffer = new UsernamePasswordRequest(authVer, uName, passwd).ToBytes();
+					await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
+					await stream.FlushAsync().ConfigureAwait(false);
+
+					Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
+					receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
+					if (receiveCount <= 0)
+					{
+						throw new InvalidOperationException("Not connected to Tor SOCKS port");
+					}
+
+					var userNamePasswordResponse = new UsernamePasswordResponse();
+					userNamePasswordResponse.FromBytes(receiveBuffer);
+					if(userNamePasswordResponse.Ver != authVer)
+					{
+						throw new InvalidOperationException("Wrong auth version");
+					}
+					
+					if (!userNamePasswordResponse.Status.IsSuccess())
+					{
+						// https://tools.ietf.org/html/rfc1929#section-2
+						// A STATUS field of X'00' indicates success. If the server returns a
+						// `failure' (STATUS value other than X'00') status, it MUST close the
+						// connection.
+						DisposeTcpClient();
+						throw new InvalidOperationException("Wrong username and/or password");
+					}
 				}
 			}
 		}

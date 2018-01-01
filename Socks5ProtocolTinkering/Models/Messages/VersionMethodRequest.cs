@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Socks5ProtocolTinkering.Models.Messages
 {
-    public class VersionMethodMessage : ByteArraySerializableBase
+    public class VersionMethodRequest : ByteArraySerializableBase
     {
 		#region PropertiesAndMembers
 
@@ -22,19 +22,19 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		#region ConstructorsAndInitializers
 
-		public VersionMethodMessage()
+		public VersionMethodRequest()
 		{
 
 		}
 
-		public VersionMethodMessage(VerField verField, MethodsField methodsField)
+		public VersionMethodRequest(VerField ver, MethodsField methods)
 		{
-			Ver = verField ?? throw new ArgumentNullException(nameof(verField));
-			Methods = methodsField ?? throw new ArgumentNullException(nameof(methodsField));
+			Ver = ver ?? throw new ArgumentNullException(nameof(ver));
+			Methods = methods ?? throw new ArgumentNullException(nameof(methods));
 
 			// The NMETHODS field contains the number of method identifier octets that appear in the METHODS field.
 			var nMethods = new NMethodsField();
-			nMethods.FromMethodsField(methodsField);
+			nMethods.FromMethodsField(methods);
 			NMethods = nMethods;
 		}
 
@@ -69,7 +69,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 			Methods.FromBytes(bytes.Skip(2).ToArray());
 		}
 
-		public override byte[] ToBytes() => ByteHelpers.Combine(new byte[] { Ver.ToByte() }, new byte[] { NMethods.ToByte() }, Methods.ToBytes());
+		public override byte[] ToBytes() => ByteHelpers.Combine(new byte[] { Ver.ToByte(), NMethods.ToByte() }, Methods.ToBytes());
 
 		#endregion
 	}

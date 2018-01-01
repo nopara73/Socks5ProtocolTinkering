@@ -6,27 +6,27 @@ using System.Text;
 
 namespace Socks5ProtocolTinkering.Models.Messages
 {
-    public class MethodSelectionMessage : ByteArraySerializableBase
+    public class UsernamePasswordResponse : ByteArraySerializableBase
 	{
 		#region PropertiesAndMembers
 
-		public VerField Ver { get; set; }
+		public AuthVerField Ver { get; set; }
 
-		public MethodField Method { get; set; }
+		public AuthStatusField Status { get; set; }
 
 		#endregion
 
 		#region ConstructorsAndInitializers
 
-		public MethodSelectionMessage()
+		public UsernamePasswordResponse()
 		{
 
 		}
 
-		public MethodSelectionMessage(VerField verField, MethodField methodField)
+		public UsernamePasswordResponse(AuthVerField ver, AuthStatusField status)
 		{
-			Ver = verField ?? throw new ArgumentNullException(nameof(verField));
-			Method = methodField ?? throw new ArgumentNullException(nameof(methodField));
+			Ver = ver ?? throw new ArgumentNullException(nameof(ver));
+			Status = status ?? throw new ArgumentNullException(nameof(status));
 		}
 
 		#endregion
@@ -45,14 +45,14 @@ namespace Socks5ProtocolTinkering.Models.Messages
 				throw new ArgumentOutOfRangeException(nameof(bytes));
 			}
 
-			Ver = new VerField();
+			Ver = new AuthVerField();
 			Ver.FromByte(bytes[0]);
 
-			Method = new MethodField();
-			Method.FromByte(bytes[1]);
+			Status = new AuthStatusField();
+			Status.FromByte(bytes[1]);
 		}
 
-		public override byte[] ToBytes() => ByteHelpers.Combine(new byte[] { Ver.ToByte() }, new byte[] { Method.ToByte() });
+		public override byte[] ToBytes() => new byte[] { Ver.ToByte(), Status.ToByte() };
 
 		#endregion
 	}
