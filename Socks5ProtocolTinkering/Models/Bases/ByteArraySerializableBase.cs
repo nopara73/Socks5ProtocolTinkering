@@ -39,7 +39,7 @@ namespace Socks5ProtocolTinkering.Models.Bases
 
 		public override string ToString()
 		{
-			return ToString(Encoding.UTF8);
+			return ToHex();
 		}
 
 		#endregion

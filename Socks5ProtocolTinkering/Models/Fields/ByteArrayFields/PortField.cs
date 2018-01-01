@@ -43,6 +43,11 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public override byte[] ToBytes() => Bytes;
 
+		public override string ToString()
+		{
+			return DstPort.ToString();
+		}
+
 		#endregion
 	}
 }

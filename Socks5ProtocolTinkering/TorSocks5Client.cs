@@ -173,12 +173,14 @@ namespace Socks5ProtocolTinkering
 			{
 				AssertConnected();
 				var stream = TcpClient.GetStream();
-				
+
+				var cmd = CmdField.Connect;
+
 				var dstAddr = new AddrField(host);
 
 				var dstPort = new PortField(port);
 
-				var connectionRequest = new ConnectionRequest(dstAddr, dstPort);
+				var connectionRequest = new TorSocks5Request(cmd, dstAddr, dstPort);
 				var sendBuffer = connectionRequest.ToBytes();
 				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
 				await stream.FlushAsync().ConfigureAwait(false);
@@ -190,7 +192,7 @@ namespace Socks5ProtocolTinkering
 					throw new InvalidOperationException("Not connected to Tor SOCKS port");
 				}
 
-				var connectionResponse = new ConnectionResponse();
+				var connectionResponse = new TorSocks5Response();
 				connectionResponse.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
 
 				if(connectionResponse.Rep != RepField.Succeeded)
@@ -217,12 +219,109 @@ namespace Socks5ProtocolTinkering
 				// the authentication method in use.
 			}
 		}
-
+		
 		public void AssertConnected()
 		{
 			if (!IsConnected)
 			{
 				throw new Exception($"{nameof(TorSocks5Client)} is not connected");
+			}
+		}
+
+		#endregion
+
+		#region Methods
+
+		/// <summary>
+		/// When Tor receives a "RESOLVE" SOCKS command, it initiates
+		/// a remote lookup of the hostname provided as the target address in the SOCKS
+		/// request.
+		/// </summary>
+		public async Task<IPAddress> ResolveAsync(string host)
+		{
+			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n44
+
+			if (string.IsNullOrWhiteSpace(host)) throw new ArgumentException(nameof(host));
+			host = host.Trim();
+
+			using (await AsyncLock.LockAsync())
+			{
+				AssertConnected();
+				var stream = TcpClient.GetStream();
+
+				var cmd = CmdField.Resolve;
+
+				var dstAddr = new AddrField(host);
+
+				var dstPort = new PortField(0);
+
+				var resolveRequest = new TorSocks5Request(cmd, dstAddr, dstPort);
+				var sendBuffer = resolveRequest.ToBytes();
+				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
+				await stream.FlushAsync().ConfigureAwait(false);
+
+				var receiveBuffer = new byte[TcpClient.ReceiveBufferSize];
+				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
+				if (receiveCount <= 0)
+				{
+					throw new InvalidOperationException("Not connected to Tor SOCKS port");
+				}
+
+				var resolveResponse = new TorSocks5Response();
+				resolveResponse.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
+
+				if (resolveResponse.Rep != RepField.Succeeded)
+				{
+					throw new InvalidOperationException(resolveResponse.Rep.ToHex());
+				}
+				return IPAddress.Parse(resolveResponse.BndAddr.DomainOrIpv4);
+			}
+		}
+
+		/// <summary>
+		/// Tor attempts to find the canonical hostname for that IPv4 record
+		/// </summary>
+		public async Task<string> ReverseResolveAsync(IPAddress ipv4)
+		{
+			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n55
+
+			if (ipv4 == null) throw new ArgumentNullException(nameof(ipv4));
+			if(ipv4.AddressFamily != AddressFamily.InterNetwork)
+			{
+				throw new ArgumentException(nameof(ipv4));
+			}
+
+			using (await AsyncLock.LockAsync())
+			{
+				AssertConnected();
+				var stream = TcpClient.GetStream();
+
+				var cmd = CmdField.ResolvePtr;
+
+				var dstAddr = new AddrField(ipv4.ToString());
+
+				var dstPort = new PortField(0);
+
+				var resolveRequest = new TorSocks5Request(cmd, dstAddr, dstPort);
+				var sendBuffer = resolveRequest.ToBytes();
+				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
+				await stream.FlushAsync().ConfigureAwait(false);
+
+				var receiveBuffer = new byte[TcpClient.ReceiveBufferSize];
+				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
+				if (receiveCount <= 0)
+				{
+					throw new InvalidOperationException("Not connected to Tor SOCKS port");
+				}
+
+				var resolveResponse = new TorSocks5Response();
+				resolveResponse.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
+
+				if (resolveResponse.Rep != RepField.Succeeded)
+				{
+					throw new InvalidOperationException(resolveResponse.Rep.ToHex());
+				}
+				return resolveResponse.BndAddr.DomainOrIpv4;
 			}
 		}
 

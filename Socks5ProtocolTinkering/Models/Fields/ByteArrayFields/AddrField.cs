@@ -17,7 +17,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public AtypField Atyp { get; set; }
 
-		public string DstAddr
+		public string DomainOrIpv4
 		{
 			get
 			{
@@ -30,7 +30,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 					var values = new string[4];
 					for (int i = 0; i < 4; i++)
 					{
-						values[i] = Encoding.ASCII.GetString(new byte[] { Bytes[i] }); // it's ok ASCII here, these are always numbers
+						values[i] = Bytes[i].ToString(); // it's ok ASCII here, these are always numbers
 					}
 					return string.Join(".", values);
 				}
@@ -140,6 +140,8 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 		}
 
 		public override byte[] ToBytes() => Bytes;
+
+		public override string ToString() => DomainOrIpv4;
 
 		#endregion
 	}
