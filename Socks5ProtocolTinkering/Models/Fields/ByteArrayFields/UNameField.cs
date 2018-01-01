@@ -11,7 +11,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		private byte[] Bytes { get; set; }
 
-		public string UName => Encoding.UTF8.GetString(Bytes); // does Tor accept utf8 or only acii?
+		public string UName => Encoding.UTF8.GetString(Bytes); // Tor accepts UTF8 encoded passwd
 
 		#endregion
 
