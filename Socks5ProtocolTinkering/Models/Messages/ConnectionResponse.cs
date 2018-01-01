@@ -66,7 +66,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 			Rep.FromByte(bytes[1]);
 
 			Rsv = new RsvField();
-			Rsv.FromBytes(new byte[] { bytes[2] });
+			Rsv.FromByte(bytes[2]);
 
 			Atyp = new AtypField();
 			Atyp.FromByte(bytes[3]);
@@ -78,7 +78,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 			BndPort.FromBytes(bytes.Skip(bytes.Length - 2).ToArray());
 		}
 
-		public override byte[] ToBytes() => ByteHelpers.Combine(new byte[] { Ver.ToByte(), Rep.ToByte() }, Rsv.ToBytes(), new byte[] { Atyp.ToByte() }, BndAddr.ToBytes(), BndPort.ToBytes());
+		public override byte[] ToBytes() => ByteHelpers.Combine(new byte[] { Ver.ToByte(), Rep.ToByte(), Rsv.ToByte(), Atyp.ToByte() }, BndAddr.ToBytes(), BndPort.ToBytes());
 
 		#endregion
 	}
