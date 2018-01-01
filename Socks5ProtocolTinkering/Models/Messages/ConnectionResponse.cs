@@ -8,39 +8,39 @@ using System.Text;
 
 namespace Socks5ProtocolTinkering.Models.Messages
 {
-	public class ConnectionRequest : ByteArraySerializableBase
+	public class ConnectionResponse : ByteArraySerializableBase
 	{
 		#region PropertiesAndMembers
 
 		public VerField Ver { get; set; }
 
-		public CmdField Cmd { get; set; }
+		public RepField Rep { get; set; }
 
 		public RsvField Rsv { get; set; }
 
 		public AtypField Atyp { get; set; }
 
-		public AddrField DstAddr { get; set; }
+		public AddrField BndAddr { get; set; }
 
-		public PortField DstPort { get; set; }
+		public PortField BndPort { get; set; }
 
 		#endregion
 
 		#region ConstructorsAndInitializers
 
-		public ConnectionRequest()
+		public ConnectionResponse()
 		{
 
 		}
 
-		public ConnectionRequest(AddrField dstAddr, PortField dstPort)
+		public ConnectionResponse(RepField rep, AddrField bndAddr, PortField bndPort)
 		{
-			DstAddr = dstAddr ?? throw new ArgumentNullException(nameof(dstAddr));
-			DstPort = dstPort ?? throw new ArgumentNullException(nameof(dstPort));
+			Rep = rep ?? throw new ArgumentNullException(nameof(rep));
+			BndAddr = bndAddr ?? throw new ArgumentNullException(nameof(bndAddr));
+			BndPort = bndPort ?? throw new ArgumentNullException(nameof(bndPort));
 			Ver = VerField.Socks5;
-			Cmd = CmdField.Connect;
 			Rsv = RsvField.X00;
-			Atyp = dstAddr.Atyp;
+			Atyp = bndAddr.Atyp;
 		}
 
 		#endregion
@@ -62,8 +62,8 @@ namespace Socks5ProtocolTinkering.Models.Messages
 			Ver = new VerField();
 			Ver.FromByte(bytes[0]);
 
-			Cmd = new CmdField();
-			Cmd.FromByte(bytes[1]);
+			Rep = new RepField();
+			Rep.FromByte(bytes[1]);
 
 			Rsv = new RsvField();
 			Rsv.FromBytes(new byte[] { bytes[2] });
@@ -71,14 +71,14 @@ namespace Socks5ProtocolTinkering.Models.Messages
 			Atyp = new AtypField();
 			Atyp.FromByte(bytes[3]);
 
-			DstAddr = new AddrField();
-			DstAddr.FromBytes(bytes.Skip(4).Take(bytes.Length - 4 - 2).ToArray());
+			BndAddr = new AddrField();
+			BndAddr.FromBytes(bytes.Skip(4).Take(bytes.Length - 4 - 2).ToArray());
 
-			DstPort = new PortField();
-			DstPort.FromBytes(bytes.Skip(bytes.Length - 2).ToArray());
+			BndPort = new PortField();
+			BndPort.FromBytes(bytes.Skip(bytes.Length - 2).ToArray());
 		}
 
-		public override byte[] ToBytes() => ByteHelpers.Combine(new byte[] { Ver.ToByte(), Cmd.ToByte() }, Rsv.ToBytes(), new byte[] { Atyp.ToByte() }, DstAddr.ToBytes(), DstPort.ToBytes());
+		public override byte[] ToBytes() => ByteHelpers.Combine(new byte[] { Ver.ToByte(), Rep.ToByte() }, Rsv.ToBytes(), new byte[] { Atyp.ToByte() }, BndAddr.ToBytes(), BndPort.ToBytes());
 
 		#endregion
 	}

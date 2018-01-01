@@ -23,9 +23,9 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		}
 
-		public UsernamePasswordResponse(AuthVerField ver, AuthStatusField status)
+		public UsernamePasswordResponse(AuthStatusField status)
 		{
-			Ver = ver ?? throw new ArgumentNullException(nameof(ver));
+			Ver = AuthVerField.Version1;
 			Status = status ?? throw new ArgumentNullException(nameof(status));
 		}
 

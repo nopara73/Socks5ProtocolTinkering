@@ -27,9 +27,9 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		}
 
-		public VersionMethodRequest(VerField ver, MethodsField methods)
+		public VersionMethodRequest(MethodsField methods)
 		{
-			Ver = ver ?? throw new ArgumentNullException(nameof(ver));
+			Ver = VerField.Socks5;
 			Methods = methods ?? throw new ArgumentNullException(nameof(methods));
 
 			// The NMETHODS field contains the number of method identifier octets that appear in the METHODS field.

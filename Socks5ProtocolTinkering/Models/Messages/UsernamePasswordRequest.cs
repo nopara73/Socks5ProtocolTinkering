@@ -31,9 +31,9 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		}
 
-		public UsernamePasswordRequest(AuthVerField ver, UNameField uName, PasswdField passwd)
+		public UsernamePasswordRequest(UNameField uName, PasswdField passwd)
 		{
-			Ver = ver ?? throw new ArgumentNullException(nameof(ver));
+			Ver = AuthVerField.Version1;
 			UName = uName ?? throw new ArgumentNullException(nameof(uName));
 			Passwd = passwd ?? throw new ArgumentNullException(nameof(passwd));
 

@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 {
-	public class DstAddrField : ByteArraySerializableBase
+	public class AddrField : ByteArraySerializableBase
 	{
 		#region PropertiesAndMembers
 
@@ -45,13 +45,13 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		#region ConstructorsAndInitializers
 
-		public DstAddrField()
+		public AddrField()
 		{
 
 		}
 
 		/// <param name="dstAddr">domain or ipv4</param>
-		public DstAddrField(string dstAddr)
+		public AddrField(string dstAddr)
 		{
 			if (string.IsNullOrWhiteSpace(dstAddr)) throw new ArgumentException(nameof(dstAddr));
 

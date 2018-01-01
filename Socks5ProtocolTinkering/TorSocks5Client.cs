@@ -6,6 +6,7 @@ using Socks5ProtocolTinkering.Models.Fields.OctetFields;
 using Socks5ProtocolTinkering.Models.Messages;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -77,8 +78,7 @@ namespace Socks5ProtocolTinkering
 				AssertConnected();
 
 				var stream = TcpClient.GetStream();
-
-				var ver = VerField.Socks5;
+				
 				MethodsField methods;
 				if (!isolateStream)
 				{
@@ -89,7 +89,7 @@ namespace Socks5ProtocolTinkering
 					methods = new MethodsField(MethodField.UsernamePassword);
 				}
 
-				var sendBuffer = new VersionMethodRequest(ver, methods).ToBytes();
+				var sendBuffer = new VersionMethodRequest(methods).ToBytes();
 				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
 				await stream.FlushAsync().ConfigureAwait(false);
 
@@ -100,7 +100,7 @@ namespace Socks5ProtocolTinkering
 					throw new InvalidOperationException("Not connected to Tor SOCKS port");
 				}
 				var methodSelection = new MethodSelectionResponse();
-				methodSelection.FromBytes(receiveBuffer);
+				methodSelection.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
 				if(methodSelection.Ver != VerField.Socks5)
 				{
 					throw new InvalidOperationException($"SOCKS{methodSelection.Ver.Value} is not supported. Only SOCKS5 is supported");
@@ -120,12 +120,12 @@ namespace Socks5ProtocolTinkering
 					// Username / Password Authentication protocol, the Username / Password
 					// subnegotiation begins.  This begins with the client producing a
 					// Username / Password request:
-					var authVer = AuthVerField.Version1;
 					var username = RandomString.Generate(21);
 					var password = RandomString.Generate(21);
 					var uName = new UNameField(username);
 					var passwd = new PasswdField(password);
-					sendBuffer = new UsernamePasswordRequest(authVer, uName, passwd).ToBytes();
+					var usernamePasswordRequest = new UsernamePasswordRequest(uName, passwd);
+					sendBuffer = usernamePasswordRequest.ToBytes();
 					await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
 					await stream.FlushAsync().ConfigureAwait(false);
 
@@ -137,8 +137,8 @@ namespace Socks5ProtocolTinkering
 					}
 
 					var userNamePasswordResponse = new UsernamePasswordResponse();
-					userNamePasswordResponse.FromBytes(receiveBuffer);
-					if(userNamePasswordResponse.Ver != authVer)
+					userNamePasswordResponse.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
+					if(userNamePasswordResponse.Ver != usernamePasswordRequest.Ver)
 					{
 						throw new InvalidOperationException("Wrong auth version");
 					}
@@ -173,14 +173,13 @@ namespace Socks5ProtocolTinkering
 			{
 				AssertConnected();
 				var stream = TcpClient.GetStream();
+				
+				var dstAddr = new AddrField(host);
 
-				var ver = VerField.Socks5;
+				var dstPort = new PortField(port);
 
-				var dstAddr = new DstAddrField(host);
-
-				var dstPort = new DstPortField(port);
-
-				var sendBuffer = new ConnectionRequest(ver, dstAddr, dstPort).ToBytes();
+				var connectionRequest = new ConnectionRequest(dstAddr, dstPort);
+				var sendBuffer = connectionRequest.ToBytes();
 				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
 				await stream.FlushAsync().ConfigureAwait(false);
 
@@ -190,6 +189,21 @@ namespace Socks5ProtocolTinkering
 				{
 					throw new InvalidOperationException("Not connected to Tor SOCKS port");
 				}
+
+				var connectionResponse = new ConnectionResponse();
+				connectionResponse.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
+
+				if(connectionResponse.Ver != connectionRequest.Ver)
+				{
+					throw new InvalidOperationException("Wrong version");
+				}
+
+				if(connectionResponse.Rep != RepField.Succeeded)
+				{
+					throw new InvalidOperationException(connectionResponse.Rep.ToHex());
+				}
+
+				// Don't check the Bnd. Address and Bnd. Port. because Tor doesn't seem to return any, ever. It returns zeros instead.
 			}
 		}
 

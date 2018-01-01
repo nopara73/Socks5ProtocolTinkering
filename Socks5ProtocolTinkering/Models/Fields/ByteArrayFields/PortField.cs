@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 {
-    public class DstPortField : ByteArraySerializableBase
+    public class PortField : ByteArraySerializableBase
 	{
 		#region PropertiesAndMembers
 
@@ -18,12 +18,12 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		#region ConstructorsAndInitializers
 
-		public DstPortField()
+		public PortField()
 		{
 
 		}
 
-		public DstPortField(int dstPort)
+		public PortField(int dstPort)
 		{
 		   var bytes = BitConverter.GetBytes(dstPort);
 			if(bytes[2] != 0 || bytes[3] != 0)

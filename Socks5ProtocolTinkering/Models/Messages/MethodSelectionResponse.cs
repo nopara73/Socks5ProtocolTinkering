@@ -23,10 +23,10 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		}
 
-		public MethodSelectionResponse(VerField ver, MethodField method)
+		public MethodSelectionResponse(MethodField method)
 		{
-			Ver = ver ?? throw new ArgumentNullException(nameof(ver));
 			Method = method ?? throw new ArgumentNullException(nameof(method));
+			Ver = VerField.Socks5;
 		}
 
 		#endregion
