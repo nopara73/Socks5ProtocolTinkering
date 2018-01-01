@@ -23,7 +23,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 			{
 				if(Atyp == AtypField.DomainName)
 				{
-					return Encoding.UTF8.GetString(Bytes.Skip(1).ToArray()); // TODO: UTF8 is fine here?
+					return Encoding.ASCII.GetString(Bytes.Skip(1).ToArray()); // UTF8 result in general SOCKS server failure
 				}
 				else if (Atyp == AtypField.IpV4)
 				{
@@ -67,7 +67,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 				// the address field contains a fully-qualified domain name.  The first
 				// octet of the address field contains the number of octets of name that
 				// follow, there is no terminating NUL octet.
-				var domainBytes = Encoding.UTF8.GetBytes(dstAddr);
+				var domainBytes = Encoding.ASCII.GetBytes(dstAddr); // Tor only knows ASCII, UTF8 results in general SOCKS server failure
 				var numberOfOctets = domainBytes.Length;
 				if (numberOfOctets > 255)
 				{
