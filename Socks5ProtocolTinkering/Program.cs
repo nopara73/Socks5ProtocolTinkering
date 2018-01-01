@@ -19,10 +19,8 @@ namespace Socks5ProtocolTinkering
 			using (var client = new TorSocks5Client(new IPEndPoint(IPAddress.Loopback, 9050)))
 			{
 				await client.ConnectAsync();
-				await client.HandshakeAsync("foo", "bar");
+				await client.HandshakeAsync(true);
 			}
-
-			Console.ReadLine();
         }
     }
 }

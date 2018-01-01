@@ -1,4 +1,5 @@
 ﻿using Nito.AsyncEx;
+using Socks5ProtocolTinkering.Helpers;
 using Socks5ProtocolTinkering.Models;
 using Socks5ProtocolTinkering.Models.Fields.ByteArrayFields;
 using Socks5ProtocolTinkering.Models.Fields.OctetFields;
@@ -62,7 +63,12 @@ namespace Socks5ProtocolTinkering
 			}
 		}
 
-		public async Task HandshakeAsync(string username = null, string password = null)
+		/// <summary>
+		/// IsolateSOCKSAuth must be on (on by default)
+		/// https://www.torproject.org/docs/tor-manual.html.en
+		/// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n35
+		/// </summary>
+		public async Task HandshakeAsync(bool isolateStream = true)
 		{
 			using (await AsyncLock.LockAsync())
 			{
@@ -72,21 +78,13 @@ namespace Socks5ProtocolTinkering
 
 				var ver = VerField.Socks5;
 				MethodsField methods;
-				if (username == null && password == null)
+				if (!isolateStream)
 				{
 					methods = new MethodsField(MethodField.NoAuthenticationRequired);
 				}
 				else
 				{
-					if (string.IsNullOrEmpty(username))
-					{
-						throw new ArgumentException(nameof(username));
-					}
-					if (string.IsNullOrEmpty(password))
-					{
-						throw new ArgumentException(nameof(password));
-					}
-					methods = new MethodsField(MethodField.NoAuthenticationRequired, MethodField.UsernamePassword);
+					methods = new MethodsField(MethodField.UsernamePassword);
 				}
 
 				var sendBuffer = new VersionMethodRequest(ver, methods).ToBytes();
@@ -121,6 +119,8 @@ namespace Socks5ProtocolTinkering
 					// subnegotiation begins.  This begins with the client producing a
 					// Username / Password request:
 					var authVer = AuthVerField.Version1;
+					var username = RandomString.Generate(21);
+					var password = RandomString.Generate(21);
 					var uName = new UNameField(username);
 					var passwd = new PasswdField(password);
 					sendBuffer = new UsernamePasswordRequest(authVer, uName, passwd).ToBytes();
@@ -141,7 +141,7 @@ namespace Socks5ProtocolTinkering
 						throw new InvalidOperationException("Wrong auth version");
 					}
 					
-					if (!userNamePasswordResponse.Status.IsSuccess())
+					if (!userNamePasswordResponse.Status.IsSuccess()) // In Tor authentication is different, this will never happen;
 					{
 						// https://tools.ietf.org/html/rfc1929#section-2
 						// A STATUS field of X'00' indicates success. If the server returns a
