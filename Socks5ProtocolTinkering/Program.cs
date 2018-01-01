@@ -20,8 +20,27 @@ namespace Socks5ProtocolTinkering
 			{
 				await client.ConnectAsync();
 				await client.HandshakeAsync(false);
-				Console.WriteLine(await client.ReverseResolveAsync(IPAddress.Parse("104.28.11.85")));
+				Console.WriteLine(await client.ReverseResolveAsync(IPAddress.Parse("192.64.147.228")));
 			}
+			using (var client = new TorSocks5Client(new IPEndPoint(IPAddress.Loopback, 9050)))
+			{
+				await client.ConnectAsync();
+				await client.HandshakeAsync(false);
+				Console.WriteLine(await client.ResolveAsync("google.com"));
+			}
+			using (var client = new TorSocks5Client(new IPEndPoint(IPAddress.Loopback, 9050)))
+			{
+				await client.ConnectAsync();
+				await client.HandshakeAsync(false);
+				await client.ConnectToDestinationAsync("google.com", 80);
+			}
+			using (var client = new TorSocks5Client(new IPEndPoint(IPAddress.Loopback, 9050)))
+			{
+				await client.ConnectAsync();
+				await client.HandshakeAsync(false);
+				await client.ConnectToDestinationAsync("192.64.147.228", 80);
+			}
+			Console.WriteLine("Press a key to exit...");
 			Console.ReadKey();
 		}
     }

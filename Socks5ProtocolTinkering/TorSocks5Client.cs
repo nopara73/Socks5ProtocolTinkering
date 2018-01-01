@@ -73,85 +73,66 @@ namespace Socks5ProtocolTinkering
 		/// </summary>
 		public async Task HandshakeAsync(bool isolateStream = true)
 		{
-			using (await AsyncLock.LockAsync())
+			MethodsField methods;
+			if (!isolateStream)
 			{
-				AssertConnected();
+				methods = new MethodsField(MethodField.NoAuthenticationRequired);
+			}
+			else
+			{
+				methods = new MethodsField(MethodField.UsernamePassword);
+			}
 
-				var stream = TcpClient.GetStream();
-				
-				MethodsField methods;
-				if (!isolateStream)
+			var sendBuffer = new VersionMethodRequest(methods).ToBytes();
+
+			var receiveBuffer = await SendAsync(sendBuffer, 2).ConfigureAwait(false);
+
+			var methodSelection = new MethodSelectionResponse();
+			methodSelection.FromBytes(receiveBuffer);
+			if (methodSelection.Ver != VerField.Socks5)
+			{
+				throw new InvalidOperationException($"SOCKS{methodSelection.Ver.Value} is not supported. Only SOCKS5 is supported");
+			}
+			if (methodSelection.Method == MethodField.NoAcceptableMethods)
+			{
+				// https://www.ietf.org/rfc/rfc1928.txt
+				// If the selected METHOD is X'FF', none of the methods listed by the
+				// client are acceptable, and the client MUST close the connection.
+				DisposeTcpClient();
+				throw new InvalidOperationException("The SOCKS5 proxy does not support any of the client's authentication methods.");
+			}
+			if (methodSelection.Method == MethodField.UsernamePassword)
+			{
+				// https://tools.ietf.org/html/rfc1929#section-2
+				// Once the SOCKS V5 server has started, and the client has selected the
+				// Username / Password Authentication protocol, the Username / Password
+				// subnegotiation begins.  This begins with the client producing a
+				// Username / Password request:
+				var username = RandomString.Generate(21);
+				var password = RandomString.Generate(21);
+				var uName = new UNameField(username);
+				var passwd = new PasswdField(password);
+				var usernamePasswordRequest = new UsernamePasswordRequest(uName, passwd);
+				sendBuffer = usernamePasswordRequest.ToBytes();
+
+				Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
+				receiveBuffer = await SendAsync(sendBuffer, 2).ConfigureAwait(false);
+
+				var userNamePasswordResponse = new UsernamePasswordResponse();
+				userNamePasswordResponse.FromBytes(receiveBuffer);
+				if (userNamePasswordResponse.Ver != usernamePasswordRequest.Ver)
 				{
-					methods = new MethodsField(MethodField.NoAuthenticationRequired);
-				}
-				else
-				{
-					methods = new MethodsField(MethodField.UsernamePassword);
+					throw new InvalidOperationException("Wrong auth version");
 				}
 
-				var sendBuffer = new VersionMethodRequest(methods).ToBytes();
-				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
-				await stream.FlushAsync().ConfigureAwait(false);
-
-				var receiveBuffer = new byte[2];
-				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
-				if (receiveCount <= 0)
-				{
-					throw new InvalidOperationException("Not connected to Tor SOCKS port");
-				}
-				var methodSelection = new MethodSelectionResponse();
-				methodSelection.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
-				if(methodSelection.Ver != VerField.Socks5)
-				{
-					throw new InvalidOperationException($"SOCKS{methodSelection.Ver.Value} is not supported. Only SOCKS5 is supported");
-				}
-				if(methodSelection.Method == MethodField.NoAcceptableMethods)
-				{
-					// https://www.ietf.org/rfc/rfc1928.txt
-					// If the selected METHOD is X'FF', none of the methods listed by the
-					// client are acceptable, and the client MUST close the connection.
-					DisposeTcpClient();
-					throw new InvalidOperationException("The SOCKS5 proxy does not support any of the client's authentication methods.");
-				}
-				if(methodSelection.Method == MethodField.UsernamePassword)
+				if (!userNamePasswordResponse.Status.IsSuccess()) // In Tor authentication is different, this will never happen;
 				{
 					// https://tools.ietf.org/html/rfc1929#section-2
-					// Once the SOCKS V5 server has started, and the client has selected the
-					// Username / Password Authentication protocol, the Username / Password
-					// subnegotiation begins.  This begins with the client producing a
-					// Username / Password request:
-					var username = RandomString.Generate(21);
-					var password = RandomString.Generate(21);
-					var uName = new UNameField(username);
-					var passwd = new PasswdField(password);
-					var usernamePasswordRequest = new UsernamePasswordRequest(uName, passwd);
-					sendBuffer = usernamePasswordRequest.ToBytes();
-					await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
-					await stream.FlushAsync().ConfigureAwait(false);
-
-					Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
-					receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
-					if (receiveCount <= 0)
-					{
-						throw new InvalidOperationException("Not connected to Tor SOCKS port");
-					}
-
-					var userNamePasswordResponse = new UsernamePasswordResponse();
-					userNamePasswordResponse.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
-					if(userNamePasswordResponse.Ver != usernamePasswordRequest.Ver)
-					{
-						throw new InvalidOperationException("Wrong auth version");
-					}
-					
-					if (!userNamePasswordResponse.Status.IsSuccess()) // In Tor authentication is different, this will never happen;
-					{
-						// https://tools.ietf.org/html/rfc1929#section-2
-						// A STATUS field of X'00' indicates success. If the server returns a
-						// `failure' (STATUS value other than X'00') status, it MUST close the
-						// connection.
-						DisposeTcpClient();
-						throw new InvalidOperationException("Wrong username and/or password");
-					}
+					// A STATUS field of X'00' indicates success. If the server returns a
+					// `failure' (STATUS value other than X'00') status, it MUST close the
+					// connection.
+					DisposeTcpClient();
+					throw new InvalidOperationException("Wrong username and/or password");
 				}
 			}
 		}
@@ -161,7 +142,7 @@ namespace Socks5ProtocolTinkering
 			if (destination == null) throw new ArgumentNullException(nameof(destination));
 			await ConnectToDestinationAsync(destination.Address.ToString(), destination.Port).ConfigureAwait(false);
 		}
-		
+
 		/// <param name="host">ipv4 or domain</param>
 		public async Task ConnectToDestinationAsync(string host, int port)
 		{
@@ -169,55 +150,42 @@ namespace Socks5ProtocolTinkering
 			if (port < 0) throw new ArgumentOutOfRangeException(nameof(port));
 			host = host.Trim();
 
-			using (await AsyncLock.LockAsync())
+			var cmd = CmdField.Connect;
+
+			var dstAddr = new AddrField(host);
+
+			var dstPort = new PortField(port);
+
+			var connectionRequest = new TorSocks5Request(cmd, dstAddr, dstPort);
+			var sendBuffer = connectionRequest.ToBytes();
+
+			var receiveBuffer = await SendAsync(sendBuffer).ConfigureAwait(false);
+
+			var connectionResponse = new TorSocks5Response();
+			connectionResponse.FromBytes(receiveBuffer);
+
+			if (connectionResponse.Rep != RepField.Succeeded)
 			{
-				AssertConnected();
-				var stream = TcpClient.GetStream();
-
-				var cmd = CmdField.Connect;
-
-				var dstAddr = new AddrField(host);
-
-				var dstPort = new PortField(port);
-
-				var connectionRequest = new TorSocks5Request(cmd, dstAddr, dstPort);
-				var sendBuffer = connectionRequest.ToBytes();
-				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
-				await stream.FlushAsync().ConfigureAwait(false);
-
-				var receiveBuffer = new byte[TcpClient.ReceiveBufferSize];
-				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
-				if (receiveCount <= 0)
-				{
-					throw new InvalidOperationException("Not connected to Tor SOCKS port");
-				}
-
-				var connectionResponse = new TorSocks5Response();
-				connectionResponse.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
-
-				if(connectionResponse.Rep != RepField.Succeeded)
-				{
-					// https://www.ietf.org/rfc/rfc1928.txt
-					// When a reply(REP value other than X'00') indicates a failure, the
-					// SOCKS server MUST terminate the TCP connection shortly after sending
-					// the reply.This must be no more than 10 seconds after detecting the
-					// condition that caused a failure.
-					DisposeTcpClient();
-					throw new InvalidOperationException(connectionResponse.Rep.ToHex());
-				}
-
-				// Don't check the Bnd. Address and Bnd. Port. because Tor doesn't seem to return any, ever. It returns zeros instead.
-				// Generally also don't check anything but the success response, according to Socks5 RFC
-
-				// If the reply code(REP value of X'00') indicates a success, and the
-				// request was either a BIND or a CONNECT, the client may now start
-				// passing data.  If the selected authentication method supports
-				// encapsulation for the purposes of integrity, authentication and / or
-				// confidentiality, the data are encapsulated using the method-dependent
-				// encapsulation.Similarly, when data arrives at the SOCKS server for
-				// the client, the server MUST encapsulate the data as appropriate for 
-				// the authentication method in use.
+				// https://www.ietf.org/rfc/rfc1928.txt
+				// When a reply(REP value other than X'00') indicates a failure, the
+				// SOCKS server MUST terminate the TCP connection shortly after sending
+				// the reply.This must be no more than 10 seconds after detecting the
+				// condition that caused a failure.
+				DisposeTcpClient();
+				throw new InvalidOperationException(connectionResponse.Rep.ToHex());
 			}
+
+			// Don't check the Bnd. Address and Bnd. Port. because Tor doesn't seem to return any, ever. It returns zeros instead.
+			// Generally also don't check anything but the success response, according to Socks5 RFC
+
+			// If the reply code(REP value of X'00') indicates a success, and the
+			// request was either a BIND or a CONNECT, the client may now start
+			// passing data.  If the selected authentication method supports
+			// encapsulation for the purposes of integrity, authentication and / or
+			// confidentiality, the data are encapsulated using the method-dependent
+			// encapsulation.Similarly, when data arrives at the SOCKS server for
+			// the client, the server MUST encapsulate the data as appropriate for 
+			// the authentication method in use.
 		}
 		
 		public void AssertConnected()
@@ -233,6 +201,37 @@ namespace Socks5ProtocolTinkering
 		#region Methods
 
 		/// <summary>
+		/// Sends bytes to the Tor Socks5 connection
+		/// </summary>
+		/// <param name="sendBuffer">Sent data</param>
+		/// <param name="receiveBufferSize">Maximum number of bytes expected to be received in the reply</param>
+		/// <returns>Reply</returns>
+		public async Task<byte[]> SendAsync(byte[] sendBuffer, int? receiveBufferSize = null)
+		{
+			if(sendBuffer == null)
+			{
+				throw new ArgumentNullException(nameof(sendBuffer));
+			}
+			using (await AsyncLock.LockAsync())
+			{
+				AssertConnected();
+				var stream = TcpClient.GetStream();
+
+				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
+				await stream.FlushAsync().ConfigureAwait(false);
+
+				int recBuffSize = receiveBufferSize ?? TcpClient.ReceiveBufferSize;
+				var receiveBuffer = new byte[recBuffSize];
+				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
+				if (receiveCount <= 0)
+				{
+					throw new InvalidOperationException("Not connected to Tor SOCKS5 port");
+				}
+				return receiveBuffer.Take(receiveCount).ToArray();
+			}
+		}
+
+		/// <summary>
 		/// When Tor receives a "RESOLVE" SOCKS command, it initiates
 		/// a remote lookup of the hostname provided as the target address in the SOCKS
 		/// request.
@@ -244,38 +243,25 @@ namespace Socks5ProtocolTinkering
 			if (string.IsNullOrWhiteSpace(host)) throw new ArgumentException(nameof(host));
 			host = host.Trim();
 
-			using (await AsyncLock.LockAsync())
+			var cmd = CmdField.Resolve;
+
+			var dstAddr = new AddrField(host);
+
+			var dstPort = new PortField(0);
+
+			var resolveRequest = new TorSocks5Request(cmd, dstAddr, dstPort);
+			var sendBuffer = resolveRequest.ToBytes();
+
+			var receiveBuffer = await SendAsync(sendBuffer).ConfigureAwait(false);
+
+			var resolveResponse = new TorSocks5Response();
+			resolveResponse.FromBytes(receiveBuffer);
+
+			if (resolveResponse.Rep != RepField.Succeeded)
 			{
-				AssertConnected();
-				var stream = TcpClient.GetStream();
-
-				var cmd = CmdField.Resolve;
-
-				var dstAddr = new AddrField(host);
-
-				var dstPort = new PortField(0);
-
-				var resolveRequest = new TorSocks5Request(cmd, dstAddr, dstPort);
-				var sendBuffer = resolveRequest.ToBytes();
-				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
-				await stream.FlushAsync().ConfigureAwait(false);
-
-				var receiveBuffer = new byte[TcpClient.ReceiveBufferSize];
-				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
-				if (receiveCount <= 0)
-				{
-					throw new InvalidOperationException("Not connected to Tor SOCKS port");
-				}
-
-				var resolveResponse = new TorSocks5Response();
-				resolveResponse.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
-
-				if (resolveResponse.Rep != RepField.Succeeded)
-				{
-					throw new InvalidOperationException(resolveResponse.Rep.ToHex());
-				}
-				return IPAddress.Parse(resolveResponse.BndAddr.DomainOrIpv4);
+				throw new InvalidOperationException(resolveResponse.Rep.ToHex());
 			}
+			return IPAddress.Parse(resolveResponse.BndAddr.DomainOrIpv4);
 		}
 
 		/// <summary>
@@ -286,43 +272,30 @@ namespace Socks5ProtocolTinkering
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n55
 
 			if (ipv4 == null) throw new ArgumentNullException(nameof(ipv4));
-			if(ipv4.AddressFamily != AddressFamily.InterNetwork)
+			if (ipv4.AddressFamily != AddressFamily.InterNetwork)
 			{
 				throw new ArgumentException(nameof(ipv4));
 			}
 
-			using (await AsyncLock.LockAsync())
+			var cmd = CmdField.ResolvePtr;
+
+			var dstAddr = new AddrField(ipv4.ToString());
+
+			var dstPort = new PortField(0);
+
+			var resolveRequest = new TorSocks5Request(cmd, dstAddr, dstPort);
+			var sendBuffer = resolveRequest.ToBytes();
+
+			var receiveBuffer = await SendAsync(sendBuffer).ConfigureAwait(false);
+
+			var resolveResponse = new TorSocks5Response();
+			resolveResponse.FromBytes(receiveBuffer);
+
+			if (resolveResponse.Rep != RepField.Succeeded)
 			{
-				AssertConnected();
-				var stream = TcpClient.GetStream();
-
-				var cmd = CmdField.ResolvePtr;
-
-				var dstAddr = new AddrField(ipv4.ToString());
-
-				var dstPort = new PortField(0);
-
-				var resolveRequest = new TorSocks5Request(cmd, dstAddr, dstPort);
-				var sendBuffer = resolveRequest.ToBytes();
-				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
-				await stream.FlushAsync().ConfigureAwait(false);
-
-				var receiveBuffer = new byte[TcpClient.ReceiveBufferSize];
-				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
-				if (receiveCount <= 0)
-				{
-					throw new InvalidOperationException("Not connected to Tor SOCKS port");
-				}
-
-				var resolveResponse = new TorSocks5Response();
-				resolveResponse.FromBytes(receiveBuffer.Take(receiveCount).ToArray());
-
-				if (resolveResponse.Rep != RepField.Succeeded)
-				{
-					throw new InvalidOperationException(resolveResponse.Rep.ToHex());
-				}
-				return resolveResponse.BndAddr.DomainOrIpv4;
+				throw new InvalidOperationException(resolveResponse.Rep.ToHex());
 			}
+			return resolveResponse.BndAddr.DomainOrIpv4;
 		}
 
 		#endregion
