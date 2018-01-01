@@ -23,10 +23,10 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		}
 
-		public MethodSelectionResponse(VerField verField, MethodField methodField)
+		public MethodSelectionResponse(VerField ver, MethodField method)
 		{
-			Ver = verField ?? throw new ArgumentNullException(nameof(verField));
-			Method = methodField ?? throw new ArgumentNullException(nameof(methodField));
+			Ver = ver ?? throw new ArgumentNullException(nameof(ver));
+			Method = method ?? throw new ArgumentNullException(nameof(method));
 		}
 
 		#endregion
@@ -52,7 +52,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 			Method.FromByte(bytes[1]);
 		}
 
-		public override byte[] ToBytes() => ByteHelpers.Combine(new byte[] { Ver.ToByte() }, new byte[] { Method.ToByte() });
+		public override byte[] ToBytes() => new byte[] { Ver.ToByte(), Method.ToByte() };
 
 		#endregion
 	}

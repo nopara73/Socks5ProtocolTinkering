@@ -19,7 +19,9 @@ namespace Socks5ProtocolTinkering
 
 		public TcpClient TcpClient { get; private set; }
 
-		public IPEndPoint EndPoint { get; private set; }
+		public IPEndPoint TorSocks5EndPoint { get; private set; }
+		
+		public string Destination { get; private set; }
 
 		public bool IsConnected
 		{
@@ -50,7 +52,7 @@ namespace Socks5ProtocolTinkering
 
 		public TorSocks5Client(IPEndPoint endPoint)
 		{
-			EndPoint = endPoint ?? throw new ArgumentNullException(nameof(endPoint));
+			TorSocks5EndPoint = endPoint ?? throw new ArgumentNullException(nameof(endPoint));
 			TcpClient = new TcpClient();
 			AsyncLock = new AsyncLock();
 		}
@@ -59,7 +61,7 @@ namespace Socks5ProtocolTinkering
 		{
 			using (await AsyncLock.LockAsync())
 			{
-				await TcpClient.ConnectAsync(EndPoint.Address, EndPoint.Port).ConfigureAwait(false);
+				await TcpClient.ConnectAsync(TorSocks5EndPoint.Address, TorSocks5EndPoint.Port).ConfigureAwait(false);
 			}
 		}
 
@@ -150,6 +152,43 @@ namespace Socks5ProtocolTinkering
 						DisposeTcpClient();
 						throw new InvalidOperationException("Wrong username and/or password");
 					}
+				}
+			}
+		}
+
+		public async Task ConnectToDestinationAsync(IPEndPoint destination)
+		{
+			if (destination == null) throw new ArgumentNullException(nameof(destination));
+			await ConnectToDestinationAsync(destination.Address.ToString(), destination.Port).ConfigureAwait(false);
+		}
+		
+		/// <param name="host">ipv4 or domain</param>
+		public async Task ConnectToDestinationAsync(string host, int port)
+		{
+			if (string.IsNullOrWhiteSpace(host)) throw new ArgumentException(nameof(host));
+			if (port < 0) throw new ArgumentOutOfRangeException(nameof(port));
+			host = host.Trim();
+
+			using (await AsyncLock.LockAsync())
+			{
+				AssertConnected();
+				var stream = TcpClient.GetStream();
+
+				var ver = VerField.Socks5;
+
+				var dstAddr = new DstAddrField(host);
+
+				var dstPort = new DstPortField(port);
+
+				var sendBuffer = new ConnectionRequest(ver, dstAddr, dstPort).ToBytes();
+				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
+				await stream.FlushAsync().ConfigureAwait(false);
+
+				var receiveBuffer = new byte[TcpClient.ReceiveBufferSize];
+				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
+				if (receiveCount <= 0)
+				{
+					throw new InvalidOperationException("Not connected to Tor SOCKS port");
 				}
 			}
 		}

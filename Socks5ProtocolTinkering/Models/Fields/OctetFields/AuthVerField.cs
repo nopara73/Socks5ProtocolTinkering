@@ -28,7 +28,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 
 		public AuthVerField(int value)
 		{
-			if (value > 255)
+			if (value < 0 || value > 255)
 			{
 				throw new ArgumentOutOfRangeException(nameof(value));
 			}
