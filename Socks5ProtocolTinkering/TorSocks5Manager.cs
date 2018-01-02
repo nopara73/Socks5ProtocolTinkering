@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -49,10 +50,15 @@ namespace Socks5ProtocolTinkering
 			return client;
 		}
 
+		/// <summary>
+		/// When Tor receives a "RESOLVE" SOCKS command, it initiates
+		/// a remote lookup of the hostname provided as the target address in the SOCKS
+		/// request.
+		/// </summary>
 		public async Task<IPAddress> ResolveAsync(string host, bool isolateStream = true)
 		{
 			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
-
+			
 			using (var client = new TorSocks5Client(TorSocks5EndPoint))
 			{
 				await client.ConnectAsync();
@@ -61,15 +67,19 @@ namespace Socks5ProtocolTinkering
 			}
 		}
 
-		public async Task<string> ReverseResolveAsync(IPAddress ipv4, bool isolateStream = true)
+		/// <summary>
+		/// Tor attempts to find the canonical hostname for that IPv4 record
+		/// </summary>
+		public async Task<string> ReverseResolveAsync(IPAddress iPv4, bool isolateStream = true)
 		{
-			Guard.NotNull(nameof(ipv4), ipv4);
-
+			Guard.NotNull(nameof(iPv4), iPv4);
+			Guard.Same($"{nameof(iPv4)}.{nameof(iPv4.AddressFamily)}", AddressFamily.InterNetwork, iPv4.AddressFamily);
+			
 			using (var client = new TorSocks5Client(TorSocks5EndPoint))
 			{
 				await client.ConnectAsync();
 				await client.HandshakeAsync(isolateStream);
-				return await client.ReverseResolveAsync(ipv4);
+				return await client.ReverseResolveAsync(iPv4);
 			}
 		}
 

@@ -95,7 +95,7 @@ namespace Socks5ProtocolTinkering
 			methodSelection.FromBytes(receiveBuffer);
 			if (methodSelection.Ver != VerField.Socks5)
 			{
-				throw new InvalidOperationException($"SOCKS{methodSelection.Ver.Value} is not supported. Only SOCKS5 is supported");
+				throw new NotSupportedException($"`SOCKS{methodSelection.Ver.Value}` is not supported. Only SOCKS5 is supported.");
 			}
 			if (methodSelection.Method == MethodField.NoAcceptableMethods)
 			{
@@ -103,7 +103,7 @@ namespace Socks5ProtocolTinkering
 				// If the selected METHOD is X'FF', none of the methods listed by the
 				// client are acceptable, and the client MUST close the connection.
 				DisposeTcpClient();
-				throw new InvalidOperationException("The SOCKS5 proxy does not support any of the client's authentication methods.");
+				throw new NotSupportedException("Tor's SOCKS5 proxy does not support any of the client's authentication methods.");
 			}
 			if (methodSelection.Method == MethodField.UsernamePassword)
 			{
@@ -126,7 +126,7 @@ namespace Socks5ProtocolTinkering
 				userNamePasswordResponse.FromBytes(receiveBuffer);
 				if (userNamePasswordResponse.Ver != usernamePasswordRequest.Ver)
 				{
-					throw new InvalidOperationException("Wrong auth version");
+					throw new NotSupportedException($"Authentication version {userNamePasswordResponse.Ver.Value}` is not supported. Only version {usernamePasswordRequest.Ver} is supported.");
 				}
 
 				if (!userNamePasswordResponse.Status.IsSuccess()) // In Tor authentication is different, this will never happen;
@@ -136,7 +136,7 @@ namespace Socks5ProtocolTinkering
 					// `failure' (STATUS value other than X'00') status, it MUST close the
 					// connection.
 					DisposeTcpClient();
-					throw new InvalidOperationException("Wrong username and/or password");
+					throw new InvalidOperationException("Wrong username and/or password.");
 				}
 			}
 		}
@@ -147,7 +147,7 @@ namespace Socks5ProtocolTinkering
 			await ConnectToDestinationAsync(destination.Address.ToString(), destination.Port).ConfigureAwait(false);
 		}
 
-		/// <param name="host">ipv4 or domain</param>
+		/// <param name="host">IPv4 or domain</param>
 		internal async Task ConnectToDestinationAsync(string host, int port)
 		{
 			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
@@ -156,7 +156,7 @@ namespace Socks5ProtocolTinkering
 			var cmd = CmdField.Connect;
 
 			var dstAddr = new AddrField(host);
-			Destination = dstAddr.DomainOrIpv4;
+			Destination = dstAddr.DomainOrIPv4;
 
 			var dstPort = new PortField(port);
 
@@ -176,7 +176,7 @@ namespace Socks5ProtocolTinkering
 				// the reply.This must be no more than 10 seconds after detecting the
 				// condition that caused a failure.
 				DisposeTcpClient();
-				throw new InvalidOperationException(connectionResponse.Rep.ToHex());
+				throw new TorSocks5FailureResponseException(connectionResponse.Rep);
 			}
 
 			// Don't check the Bnd. Address and Bnd. Port. because Tor doesn't seem to return any, ever. It returns zeros instead.
@@ -227,7 +227,7 @@ namespace Socks5ProtocolTinkering
 				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
 				if (receiveCount <= 0)
 				{
-					throw new InvalidOperationException("Not connected to Tor SOCKS5 port");
+					throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: `{TorSocks5EndPoint}`.");
 				}
 				return receiveBuffer.Take(receiveCount).ToArray();
 			}
@@ -260,24 +260,24 @@ namespace Socks5ProtocolTinkering
 
 			if (resolveResponse.Rep != RepField.Succeeded)
 			{
-				throw new InvalidOperationException(resolveResponse.Rep.ToHex());
+				throw new TorSocks5FailureResponseException(resolveResponse.Rep);
 			}
-			return IPAddress.Parse(resolveResponse.BndAddr.DomainOrIpv4);
+			return IPAddress.Parse(resolveResponse.BndAddr.DomainOrIPv4);
 		}
 
 		/// <summary>
 		/// Tor attempts to find the canonical hostname for that IPv4 record
 		/// </summary>
-		internal async Task<string> ReverseResolveAsync(IPAddress ipv4)
+		internal async Task<string> ReverseResolveAsync(IPAddress iPv4)
 		{
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n55
 
-			Guard.NotNull(nameof(ipv4), ipv4);
-			Guard.Same($"{nameof(ipv4)}.{nameof(ipv4.AddressFamily)}", AddressFamily.InterNetwork, ipv4.AddressFamily);
+			Guard.NotNull(nameof(iPv4), iPv4);
+			Guard.Same($"{nameof(iPv4)}.{nameof(iPv4.AddressFamily)}", AddressFamily.InterNetwork, iPv4.AddressFamily);
 
 			var cmd = CmdField.ResolvePtr;
 
-			var dstAddr = new AddrField(ipv4.ToString());
+			var dstAddr = new AddrField(iPv4.ToString());
 
 			var dstPort = new PortField(0);
 
@@ -291,9 +291,9 @@ namespace Socks5ProtocolTinkering
 
 			if (resolveResponse.Rep != RepField.Succeeded)
 			{
-				throw new InvalidOperationException(resolveResponse.Rep.ToHex());
+				throw new TorSocks5FailureResponseException(resolveResponse.Rep);
 			}
-			return resolveResponse.BndAddr.DomainOrIpv4;
+			return resolveResponse.BndAddr.DomainOrIPv4;
 		}
 
 		#endregion

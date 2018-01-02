@@ -18,7 +18,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public AtypField Atyp { get; set; }
 
-		public string DomainOrIpv4
+		public string DomainOrIPv4
 		{
 			get
 			{
@@ -37,7 +37,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 				}
 				else
 				{
-					throw new NotSupportedException(); // cannot happen
+					throw new NotSupportedException($"`{nameof(Atyp)}` is not supported. Value: `{Atyp}`.");
 				}
 			}
 		}
@@ -51,7 +51,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		}
 
-		/// <param name="dstAddr">domain or ipv4</param>
+		/// <param name="dstAddr">domain or IPv4</param>
 		public AddrField(string dstAddr)
 		{
 			dstAddr = Guard.NotNullOrEmptyOrWhitespace(nameof(dstAddr), dstAddr, true);
@@ -138,7 +138,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public override byte[] ToBytes() => Bytes;
 
-		public override string ToString() => DomainOrIpv4;
+		public override string ToString() => DomainOrIPv4;
 
 		#endregion
 	}

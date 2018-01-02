@@ -44,7 +44,7 @@ namespace Socks5ProtocolTinkering.Helpers
 
 			if(!expected.Equals(actual))
 			{
-				throw new ArgumentException($"`Parameter must be `{expected}`. Actual: `{actual}`", parameterName);
+				throw new ArgumentException($"`Parameter must be `{expected}`. Actual: `{actual}`.", parameterName);
 			}
 
 			return actual;

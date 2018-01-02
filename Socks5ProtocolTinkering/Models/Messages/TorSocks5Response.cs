@@ -73,7 +73,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 		}
 
 		public override byte[] ToBytes() => ByteHelpers.Combine(new byte[] { Ver.ToByte(), Rep.ToByte(), Rsv.ToByte(), Atyp.ToByte() }, BndAddr.ToBytes(), BndPort.ToBytes());
-
+		
 		#endregion
 	}
 }

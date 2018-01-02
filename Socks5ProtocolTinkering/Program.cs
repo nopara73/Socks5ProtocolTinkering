@@ -2,6 +2,7 @@
 // https://tools.ietf.org/html/rfc1929
 // https://gitweb.torproject.org/torspec.git/plain/socks-extensions.txt
 
+using Socks5ProtocolTinkering.Exceptions;
 using Socks5ProtocolTinkering.Models;
 using System;
 using System.Collections.Generic;
@@ -35,7 +36,14 @@ namespace Socks5ProtocolTinkering
 			};
 				Console.WriteLine(await manager.ReverseResolveAsync(IPAddress.Parse("192.64.147.228")));
 				Console.WriteLine(await manager.ResolveAsync("google.com", false));
-
+				try
+				{
+					await manager.ReverseResolveAsync(IPAddress.Parse("0.64.147.228"), isolateStream: false);
+				}
+				catch(TorSocks5FailureResponseException ex)
+				{
+					Console.WriteLine(ex.Message);
+				}
 				foreach (var connTask in connectionTasks)
 				{
 					TorSocks5Client client = await connTask;

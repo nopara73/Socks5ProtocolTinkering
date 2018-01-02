@@ -27,7 +27,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			get
 			{
 				var cmd = new RepField();
-				cmd.FromHex("00");
+				cmd.FromByte((byte)ReplyType.Succeeded);
 				return cmd;
 			}
 		}
@@ -37,7 +37,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			get
 			{
 				var cmd = new RepField();
-				cmd.FromHex("01");
+				cmd.FromByte((byte)ReplyType.GeneralSocksServerFailure);
 				return cmd;
 			}
 		}
@@ -47,7 +47,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			get
 			{
 				var cmd = new RepField();
-				cmd.FromHex("02");
+				cmd.FromByte((byte)ReplyType.ConnectionNotAllowedByRuleset);
 				return cmd;
 			}
 		}
@@ -57,7 +57,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			get
 			{
 				var cmd = new RepField();
-				cmd.FromHex("03");
+				cmd.FromByte((byte)ReplyType.NetworkUnreachable);
 				return cmd;
 			}
 		}
@@ -67,7 +67,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			get
 			{
 				var cmd = new RepField();
-				cmd.FromHex("04");
+				cmd.FromByte((byte)ReplyType.HostUnreachable);
 				return cmd;
 			}
 		}
@@ -77,7 +77,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			get
 			{
 				var cmd = new RepField();
-				cmd.FromHex("05");
+				cmd.FromByte((byte)ReplyType.ConnectionRefused);
 				return cmd;
 			}
 		}
@@ -87,7 +87,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			get
 			{
 				var cmd = new RepField();
-				cmd.FromHex("06");
+				cmd.FromByte((byte)ReplyType.TtlExpired);
 				return cmd;
 			}
 		}
@@ -97,7 +97,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			get
 			{
 				var cmd = new RepField();
-				cmd.FromHex("07");
+				cmd.FromByte((byte)ReplyType.CommandNotSupported);
 				return cmd;
 			}
 		}
@@ -107,7 +107,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 			get
 			{
 				var cmd = new RepField();
-				cmd.FromHex("08");
+				cmd.FromByte((byte)ReplyType.AddressTypeNotSupported);
 				return cmd;
 			}
 		}
@@ -119,6 +119,22 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 		public RepField()
 		{
 
+		}
+
+		#endregion
+
+		#region Serialization
+
+		public override string ToString()
+		{
+			foreach(ReplyType rt in Enum.GetValues(typeof(ReplyType)))
+			{
+				if(ByteValue == (byte)rt)
+				{
+					return rt.ToString();
+				}
+			}
+			return $"Unassigned ({ToHex()})";
 		}
 
 		#endregion
