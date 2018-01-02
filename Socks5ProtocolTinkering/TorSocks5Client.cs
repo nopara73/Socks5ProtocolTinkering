@@ -56,7 +56,7 @@ namespace Socks5ProtocolTinkering
 
 		internal TorSocks5Client(IPEndPoint endPoint)
 		{
-			TorSocks5EndPoint = endPoint ?? throw new ArgumentNullException(nameof(endPoint));
+			TorSocks5EndPoint = Guard.NotNull(nameof(endPoint), endPoint);
 			TcpClient = new TcpClient();
 			AsyncLock = new AsyncLock();
 		}
@@ -142,16 +142,15 @@ namespace Socks5ProtocolTinkering
 
 		internal async Task ConnectToDestinationAsync(IPEndPoint destination)
 		{
-			if (destination == null) throw new ArgumentNullException(nameof(destination));
+			Guard.NotNull(nameof(destination), destination);
 			await ConnectToDestinationAsync(destination.Address.ToString(), destination.Port).ConfigureAwait(false);
 		}
 
 		/// <param name="host">ipv4 or domain</param>
 		internal async Task ConnectToDestinationAsync(string host, int port)
 		{
-			if (string.IsNullOrWhiteSpace(host)) throw new ArgumentException(nameof(host));
-			if (port < 0) throw new ArgumentOutOfRangeException(nameof(port));
-			host = host.Trim();
+			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
+			Guard.MinimumAndNotNull(nameof(port), port, 0);
 
 			var cmd = CmdField.Connect;
 
@@ -212,10 +211,8 @@ namespace Socks5ProtocolTinkering
 		/// <returns>Reply</returns>
 		public async Task<byte[]> SendAsync(byte[] sendBuffer, int? receiveBufferSize = null)
 		{
-			if(sendBuffer == null)
-			{
-				throw new ArgumentNullException(nameof(sendBuffer));
-			}
+			Guard.NotNullOrEmpty(nameof(sendBuffer), sendBuffer);
+
 			using (await AsyncLock.LockAsync())
 			{
 				AssertConnected();
@@ -244,8 +241,7 @@ namespace Socks5ProtocolTinkering
 		{
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n44
 
-			if (string.IsNullOrWhiteSpace(host)) throw new ArgumentException(nameof(host));
-			host = host.Trim();
+			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
 
 			var cmd = CmdField.Resolve;
 
@@ -275,7 +271,8 @@ namespace Socks5ProtocolTinkering
 		{
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n55
 
-			if (ipv4 == null) throw new ArgumentNullException(nameof(ipv4));
+			Guard.NotNull(nameof(ipv4), ipv4);
+
 			if (ipv4.AddressFamily != AddressFamily.InterNetwork)
 			{
 				throw new ArgumentException(nameof(ipv4));

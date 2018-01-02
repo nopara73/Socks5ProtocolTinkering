@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using Socks5ProtocolTinkering.Models.Fields.ByteArrayFields;
 using Socks5ProtocolTinkering.Models.Fields.OctetFields;
 using System;
@@ -35,9 +36,9 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public TorSocks5Response(RepField rep, AddrField bndAddr, PortField bndPort)
 		{
-			Rep = rep ?? throw new ArgumentNullException(nameof(rep));
-			BndAddr = bndAddr ?? throw new ArgumentNullException(nameof(bndAddr));
-			BndPort = bndPort ?? throw new ArgumentNullException(nameof(bndPort));
+			Rep = Guard.NotNull(nameof(rep), rep);
+			BndAddr = Guard.NotNull(nameof(bndAddr), bndAddr);
+			BndPort = Guard.NotNull(nameof(bndPort), bndPort);
 			Ver = VerField.Socks5;
 			Rsv = RsvField.X00;
 			Atyp = bndAddr.Atyp;
@@ -49,10 +50,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public override void FromBytes(byte[] bytes)
 		{
-			if (bytes == null)
-			{
-				throw new ArgumentNullException(nameof(bytes));
-			}
+			Guard.NotNullOrEmpty(nameof(bytes), bytes);
 
 			if (bytes.Length < 6)
 			{

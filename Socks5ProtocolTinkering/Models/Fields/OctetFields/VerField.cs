@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Interfaces;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Interfaces;
 using Socks5ProtocolTinkering.Models.Bases;
 using System;
 using System.Collections.Generic;
@@ -29,12 +30,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 
 		public VerField(int value)
 		{
-			if (value < 0 || value > 255)
-			{
-				throw new ArgumentOutOfRangeException(nameof(value));
-			}
-
-			ByteValue = (byte)value;
+			ByteValue = (byte)Guard.InRangeAndNotNull(nameof(value), value, 0, 255);
 		}
 
 		#endregion		

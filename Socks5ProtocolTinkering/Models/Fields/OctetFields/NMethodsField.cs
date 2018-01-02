@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using Socks5ProtocolTinkering.Models.Fields.ByteArrayFields;
 using System;
 using System.Collections.Generic;
@@ -23,12 +24,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 
 		public NMethodsField(int value)
 		{
-			if (value < 0 || value > 255)
-			{
-				throw new ArgumentOutOfRangeException(nameof(value));
-			}
-
-			ByteValue = (byte)value;
+			ByteValue = (byte)Guard.InRangeAndNotNull(nameof(value), value, 0, 255);
 		}
 
 		#endregion
@@ -37,6 +33,8 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 		
 		public void FromMethodsField(MethodsField methods)
 		{
+			Guard.NotNull(nameof(methods), methods);
+
 			ByteValue = (byte)methods.ToBytes().Length;
 		}
 

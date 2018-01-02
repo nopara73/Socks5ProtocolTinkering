@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using Socks5ProtocolTinkering.Models.Fields.ByteArrayFields;
 using System;
 using System.Collections.Generic;
@@ -50,10 +51,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 
 		public void FromDstAddr(string dstAddr)
 		{
-			if(string.IsNullOrWhiteSpace(dstAddr))
-			{
-				throw new ArgumentException(nameof(dstAddr));
-			}
+			dstAddr = Guard.NotNullOrEmptyOrWhitespace(nameof(dstAddr), dstAddr, true);
 
 			if (IPAddress.TryParse(dstAddr, out IPAddress address))
 			{

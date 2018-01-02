@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using Socks5ProtocolTinkering.Models.Fields.OctetFields;
 using System;
 using System.Collections.Generic;
@@ -25,7 +26,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public MethodSelectionResponse(MethodField method)
 		{
-			Method = method ?? throw new ArgumentNullException(nameof(method));
+			Method = Guard.NotNull(nameof(method), method);
 			Ver = VerField.Socks5;
 		}
 
@@ -35,10 +36,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public override void FromBytes(byte[] bytes)
 		{
-			if (bytes == null)
-			{
-				throw new ArgumentNullException(nameof(bytes));
-			}
+			Guard.NotNullOrEmpty(nameof(bytes), bytes);
 
 			if (bytes.Length != 2)
 			{

@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using Socks5ProtocolTinkering.Models.Fields.ByteArrayFields;
 using Socks5ProtocolTinkering.Models.Fields.OctetFields;
 using System;
@@ -29,8 +30,9 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public VersionMethodRequest(MethodsField methods)
 		{
+			Methods = Guard.NotNull(nameof(methods), methods);
+
 			Ver = VerField.Socks5;
-			Methods = methods ?? throw new ArgumentNullException(nameof(methods));
 
 			// The NMETHODS field contains the number of method identifier octets that appear in the METHODS field.
 			var nMethods = new NMethodsField();
@@ -44,10 +46,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public override void FromBytes(byte[] bytes)
 		{
-			if (bytes == null)
-			{
-				throw new ArgumentNullException(nameof(bytes));
-			}
+			Guard.NotNullOrEmpty(nameof(bytes), bytes);
 
 			if (bytes.Length < 3 || bytes.Length > 257)
 			{

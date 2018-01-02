@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using Socks5ProtocolTinkering.Models.Fields.ByteArrayFields;
 using Socks5ProtocolTinkering.Models.Fields.OctetFields;
 using System;
@@ -34,8 +35,8 @@ namespace Socks5ProtocolTinkering.Models.Messages
 		public UsernamePasswordRequest(UNameField uName, PasswdField passwd)
 		{
 			Ver = AuthVerField.Version1;
-			UName = uName ?? throw new ArgumentNullException(nameof(uName));
-			Passwd = passwd ?? throw new ArgumentNullException(nameof(passwd));
+			UName = Guard.NotNull(nameof(uName), uName);
+			Passwd = Guard.NotNull(nameof(passwd), passwd);
 
 			var pLen = new PLenField();
 			var uLen = new ULenField();
@@ -51,10 +52,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public override void FromBytes(byte[] bytes)
 		{
-			if (bytes == null)
-			{
-				throw new ArgumentNullException(nameof(bytes));
-			}
+			Guard.NotNullOrEmpty(nameof(bytes), bytes);
 
 			if (bytes.Length < 6 || bytes.Length > 513)
 			{

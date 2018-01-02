@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using Socks5ProtocolTinkering.Models.Fields.OctetFields;
 using System;
 using System.Collections.Generic;
@@ -25,8 +26,8 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public UsernamePasswordResponse(AuthStatusField status)
 		{
+			Status = Guard.NotNull(nameof(status), status);
 			Ver = AuthVerField.Version1;
-			Status = status ?? throw new ArgumentNullException(nameof(status));
 		}
 
 		#endregion
@@ -35,10 +36,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 		public override void FromBytes(byte[] bytes)
 		{
-			if (bytes == null)
-			{
-				throw new ArgumentNullException(nameof(bytes));
-			}
+			Guard.NotNullOrEmpty(nameof(bytes), bytes);
 
 			if (bytes.Length != 2)
 			{
