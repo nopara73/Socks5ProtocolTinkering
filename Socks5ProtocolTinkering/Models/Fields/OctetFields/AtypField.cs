@@ -55,10 +55,8 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 
 			if (IPAddress.TryParse(dstAddr, out IPAddress address))
 			{
-				if (address.AddressFamily != AddressFamily.InterNetwork)
-				{
-					throw new ArgumentException(nameof(dstAddr));
-				}
+				Guard.Same($"{nameof(address)}.{nameof(address.AddressFamily)}", AddressFamily.InterNetwork, address.AddressFamily);
+
 				ByteValue = IPv4.ToByte();
 			}
 			else

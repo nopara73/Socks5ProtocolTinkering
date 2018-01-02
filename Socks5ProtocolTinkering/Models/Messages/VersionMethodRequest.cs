@@ -47,11 +47,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 		public override void FromBytes(byte[] bytes)
 		{
 			Guard.NotNullOrEmpty(nameof(bytes), bytes);
-
-			if (bytes.Length < 3 || bytes.Length > 257)
-			{
-				throw new ArgumentOutOfRangeException(nameof(bytes));
-			}
+			Guard.InRangeAndNotNull($"{nameof(bytes)}.{nameof(bytes.Length)}", bytes.Length, 3, 257);
 
 			Ver = new VerField();
 			Ver.FromByte(bytes[0]);
@@ -61,7 +57,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 			if(NMethods.Value != bytes.Length - 2)
 			{
-				throw new ArgumentException(nameof(bytes));
+				throw new FormatException($"`{nameof(NMethods)}.{nameof(NMethods.Value)}` must be `{nameof(bytes)}.{nameof(bytes.Length)} - 2` = `{bytes.Length - 2}`. Actual: `{NMethods.Value}`.");
 			}
 
 			Methods = new MethodsField();

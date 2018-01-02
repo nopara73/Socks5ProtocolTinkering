@@ -61,7 +61,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 			{
 				if(b != MethodField.NoAuthenticationRequired && b != MethodField.UsernamePassword)
 				{
-					throw new ArgumentOutOfRangeException(nameof(bytes));
+					throw new FormatException($"Unrecognized authentication method: `{ByteHelpers.ToHex(b)}`.");
 				}
 			}
 

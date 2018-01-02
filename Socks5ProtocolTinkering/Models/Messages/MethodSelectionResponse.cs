@@ -37,11 +37,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 		public override void FromBytes(byte[] bytes)
 		{
 			Guard.NotNullOrEmpty(nameof(bytes), bytes);
-
-			if (bytes.Length != 2)
-			{
-				throw new ArgumentOutOfRangeException(nameof(bytes));
-			}
+			Guard.Same($"{nameof(bytes)}.{nameof(bytes.Length)}", 2, bytes.Length);
 
 			Ver = new VerField();
 			Ver.FromByte(bytes[0]);

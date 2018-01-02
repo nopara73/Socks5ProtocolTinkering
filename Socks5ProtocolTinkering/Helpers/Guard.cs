@@ -9,6 +9,18 @@ namespace Socks5ProtocolTinkering.Helpers
 	{
 		public static T NotNull<T>(string parameterName, T value)
 		{
+			AssertCorrectParameterName(parameterName);
+
+			if (value == null)
+			{
+				throw new ArgumentNullException(parameterName, "Parameter cannot be null.");
+			}
+
+			return value;
+		}
+
+		private static void AssertCorrectParameterName(string parameterName)
+		{
 			if (parameterName == null)
 			{
 				throw new ArgumentNullException(nameof(parameterName), "Parameter cannot be null.");
@@ -23,13 +35,19 @@ namespace Socks5ProtocolTinkering.Helpers
 			{
 				throw new ArgumentException("Parameter cannot be whitespace.", nameof(parameterName));
 			}
+		}
 
-			if (value == null)
+		public static T Same<T>(string parameterName, T expected, T actual)
+		{
+			AssertCorrectParameterName(parameterName);
+			NotNull(nameof(expected), expected);
+
+			if(!expected.Equals(actual))
 			{
-				throw new ArgumentNullException(parameterName, "Parameter cannot be null.");
+				throw new ArgumentException($"`Parameter must be `{expected}`. Actual: `{actual}`", parameterName);
 			}
 
-			return value;
+			return actual;
 		}
 
 		public static IEnumerable<T> NotNullOrEmpty<T>(string parameterName, IEnumerable<T> value)

@@ -273,11 +273,7 @@ namespace Socks5ProtocolTinkering
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n55
 
 			Guard.NotNull(nameof(ipv4), ipv4);
-
-			if (ipv4.AddressFamily != AddressFamily.InterNetwork)
-			{
-				throw new ArgumentException(nameof(ipv4));
-			}
+			Guard.Same($"{nameof(ipv4)}.{nameof(ipv4.AddressFamily)}", AddressFamily.InterNetwork, ipv4.AddressFamily);
 
 			var cmd = CmdField.ResolvePtr;
 

@@ -31,7 +31,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 		    var bytes = BitConverter.GetBytes(dstPort);
 			if(bytes[2] != 0 || bytes[3] != 0)
 			{
-				throw new ArgumentOutOfRangeException(nameof(dstPort));
+				throw new FormatException($"`{nameof(dstPort)}` cannot be encoded in two octets. Value: `{dstPort}`.");
 			}
 			// https://www.ietf.org/rfc/rfc1928.txt
 			// DST.PORT desired destination port in network octet order

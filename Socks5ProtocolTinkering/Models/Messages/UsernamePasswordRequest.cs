@@ -53,11 +53,7 @@ namespace Socks5ProtocolTinkering.Models.Messages
 		public override void FromBytes(byte[] bytes)
 		{
 			Guard.NotNullOrEmpty(nameof(bytes), bytes);
-
-			if (bytes.Length < 6 || bytes.Length > 513)
-			{
-				throw new ArgumentOutOfRangeException(nameof(bytes));
-			}
+			Guard.InRangeAndNotNull($"{nameof(bytes)}.{nameof(bytes.Length)}", bytes.Length, 6, 513);
 
 			Ver = new AuthVerField();
 			Ver.FromByte(bytes[0]);
@@ -70,9 +66,10 @@ namespace Socks5ProtocolTinkering.Models.Messages
 
 			PLen = new PLenField();
 			PLen.FromByte(bytes[1 + ULen.Value]);
-			if (PLen.Value != bytes.Length - 3 + ULen.Value)
+			int expectedPlenValue = bytes.Length - 3 + ULen.Value;
+			if (PLen.Value != expectedPlenValue)
 			{
-				throw new ArgumentException(nameof(bytes));
+				throw new FormatException($"`{nameof(PLen)}.{nameof(PLen.Value)}` must be `{nameof(bytes)}.{nameof(bytes.Length)}` - 3 + `{nameof(ULen)}.{nameof(ULen.Value)}` = `{expectedPlenValue}`. Actual: `{PLen.Value}`.");
 			}
 			Passwd.FromBytes(bytes.Skip(3 + ULen.Value).ToArray());
 		}
