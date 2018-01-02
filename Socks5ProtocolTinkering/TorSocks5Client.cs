@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 
 namespace Socks5ProtocolTinkering
 {
+	/// <summary>
+	/// Create an instance with the TorSocks5Manager
+	/// </summary>
 	public class TorSocks5Client : IDisposable
 	{
 		#region PropertiesAndMembers
@@ -51,14 +54,14 @@ namespace Socks5ProtocolTinkering
 
 		#region ConstructorsAndInitializers
 
-		public TorSocks5Client(IPEndPoint endPoint)
+		internal TorSocks5Client(IPEndPoint endPoint)
 		{
 			TorSocks5EndPoint = endPoint ?? throw new ArgumentNullException(nameof(endPoint));
 			TcpClient = new TcpClient();
 			AsyncLock = new AsyncLock();
 		}
 
-		public async Task ConnectAsync()
+		internal async Task ConnectAsync()
 		{
 			using (await AsyncLock.LockAsync())
 			{
@@ -71,7 +74,7 @@ namespace Socks5ProtocolTinkering
 		/// https://www.torproject.org/docs/tor-manual.html.en
 		/// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n35
 		/// </summary>
-		public async Task HandshakeAsync(bool isolateStream = true)
+		internal async Task HandshakeAsync(bool isolateStream = true)
 		{
 			MethodsField methods;
 			if (!isolateStream)
@@ -137,14 +140,14 @@ namespace Socks5ProtocolTinkering
 			}
 		}
 
-		public async Task ConnectToDestinationAsync(IPEndPoint destination)
+		internal async Task ConnectToDestinationAsync(IPEndPoint destination)
 		{
 			if (destination == null) throw new ArgumentNullException(nameof(destination));
 			await ConnectToDestinationAsync(destination.Address.ToString(), destination.Port).ConfigureAwait(false);
 		}
 
 		/// <param name="host">ipv4 or domain</param>
-		public async Task ConnectToDestinationAsync(string host, int port)
+		internal async Task ConnectToDestinationAsync(string host, int port)
 		{
 			if (string.IsNullOrWhiteSpace(host)) throw new ArgumentException(nameof(host));
 			if (port < 0) throw new ArgumentOutOfRangeException(nameof(port));
@@ -153,6 +156,7 @@ namespace Socks5ProtocolTinkering
 			var cmd = CmdField.Connect;
 
 			var dstAddr = new AddrField(host);
+			Destination = dstAddr.DomainOrIpv4;
 
 			var dstPort = new PortField(port);
 
@@ -236,7 +240,7 @@ namespace Socks5ProtocolTinkering
 		/// a remote lookup of the hostname provided as the target address in the SOCKS
 		/// request.
 		/// </summary>
-		public async Task<IPAddress> ResolveAsync(string host)
+		internal async Task<IPAddress> ResolveAsync(string host)
 		{
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n44
 
@@ -267,7 +271,7 @@ namespace Socks5ProtocolTinkering
 		/// <summary>
 		/// Tor attempts to find the canonical hostname for that IPv4 record
 		/// </summary>
-		public async Task<string> ReverseResolveAsync(IPAddress ipv4)
+		internal async Task<string> ReverseResolveAsync(IPAddress ipv4)
 		{
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n55
 
@@ -335,7 +339,7 @@ namespace Socks5ProtocolTinkering
 			// GC.SuppressFinalize(this);
 		}
 
-		public void DisposeTcpClient()
+		private void DisposeTcpClient()
 		{
 			try
 			{

@@ -4,6 +4,7 @@
 
 using Socks5ProtocolTinkering.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -16,30 +17,30 @@ namespace Socks5ProtocolTinkering
 		static async Task Main(string[] args)
 #pragma warning restore IDE1006 // Naming Styles
 		{
-			using (var client = new TorSocks5Client(new IPEndPoint(IPAddress.Loopback, 9050)))
+			var manager = new TorSocks5Manager(new IPEndPoint(IPAddress.Loopback, 9050));
+
+			var connectionTasks = new HashSet<Task<TorSocks5Client>>
 			{
-				await client.ConnectAsync();
-				await client.HandshakeAsync(false);
-				Console.WriteLine(await client.ReverseResolveAsync(IPAddress.Parse("192.64.147.228")));
-			}
-			using (var client = new TorSocks5Client(new IPEndPoint(IPAddress.Loopback, 9050)))
+				manager.EstablishTcpConnectionAsync("google.com", 80),
+				manager.EstablishTcpConnectionAsync("penis.com", 80),
+				manager.EstablishTcpConnectionAsync("bitcoin.com", 80, false),
+				manager.EstablishTcpConnectionAsync("bitcoin.org", 80),
+				manager.EstablishTcpConnectionAsync("foo.com", 80, false),
+				manager.EstablishTcpConnectionAsync("pets.com", 80),
+				manager.EstablishTcpConnectionAsync("pets.com", 80),
+				manager.EstablishTcpConnectionAsync(new IPEndPoint(IPAddress.Parse("192.64.147.228"), 80)),
+				manager.EstablishTcpConnectionAsync("google.com", 443)
+			};
+			Console.WriteLine(await manager.ReverseResolveAsync(IPAddress.Parse("192.64.147.228")));
+			Console.WriteLine(await manager.ResolveAsync("google.com", false));
+
+			foreach(var connTask in connectionTasks)
 			{
-				await client.ConnectAsync();
-				await client.HandshakeAsync(false);
-				Console.WriteLine(await client.ResolveAsync("google.com"));
+				TorSocks5Client client = await connTask;
+				Console.WriteLine($"Connected to: {client.Destination}");
+				client.Dispose();
 			}
-			using (var client = new TorSocks5Client(new IPEndPoint(IPAddress.Loopback, 9050)))
-			{
-				await client.ConnectAsync();
-				await client.HandshakeAsync(false);
-				await client.ConnectToDestinationAsync("google.com", 80);
-			}
-			using (var client = new TorSocks5Client(new IPEndPoint(IPAddress.Loopback, 9050)))
-			{
-				await client.ConnectAsync();
-				await client.HandshakeAsync(false);
-				await client.ConnectToDestinationAsync("192.64.147.228", 80);
-			}
+
 			Console.WriteLine("Press a key to exit...");
 			Console.ReadKey();
 		}
