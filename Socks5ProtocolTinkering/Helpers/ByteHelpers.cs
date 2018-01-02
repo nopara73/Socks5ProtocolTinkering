@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Socks5ProtocolTinkering.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -8,30 +9,6 @@ namespace System
 {
     public static class ByteHelpers
     {
-		public static void AssertRange(string hex, string lowerHex, string upperHex)
-		{
-			if (string.IsNullOrWhiteSpace(hex))
-			{
-				throw new ArgumentException(hex);
-			}
-			if (string.IsNullOrWhiteSpace(lowerHex))
-			{
-				throw new ArgumentException(lowerHex);
-			}
-			if (string.IsNullOrWhiteSpace(upperHex))
-			{
-				throw new ArgumentException(upperHex);
-			}
-
-			var current = int.Parse(hex, NumberStyles.HexNumber);
-			var lower = int.Parse(lowerHex, NumberStyles.HexNumber);
-			var upper = int.Parse(upperHex, NumberStyles.HexNumber);
-			if (current < lower || current > upper)
-			{
-				throw new ArgumentOutOfRangeException(nameof(hex));
-			}
-		}
-
 		// https://stackoverflow.com/questions/415291/best-way-to-combine-two-or-more-byte-arrays-in-c-sharp
 		/// <summary>
 		/// Fastest byte array concatenation in C#
@@ -100,6 +77,8 @@ namespace System
 		/// </summary>
 		public static string ToHex(params byte[] bytes)
 		{
+			Guard.NotNullOrEmpty(nameof(bytes), bytes);
+
 			var result = new StringBuilder(bytes.Length * 2);
 			var hexAlphabet = "0123456789ABCDEF";
 
@@ -119,22 +98,17 @@ namespace System
 		/// </summary>
 		public static byte[] FromHex(string hex)
 		{
-			if (string.IsNullOrWhiteSpace(hex))
-			{
-				throw new ArgumentException(nameof(hex));
-			}
+			hex = Guard.NotNullOrEmptyOrWhitespace(nameof(hex), hex, true);
 
-			var trimmedHex = hex.Trim();
-
-			var bytes = new byte[trimmedHex.Length / 2];
+			var bytes = new byte[hex.Length / 2];
 			var hexValue = new int[] { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
 	   0x06, 0x07, 0x08, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	   0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 
-			for (int x = 0, i = 0; i < trimmedHex.Length; i += 2, x += 1)
+			for (int x = 0, i = 0; i < hex.Length; i += 2, x += 1)
 			{
-				bytes[x] = (byte)(hexValue[char.ToUpper(trimmedHex[i + 0]) - '0'] << 4 |
-								  hexValue[char.ToUpper(trimmedHex[i + 1]) - '0']);
+				bytes[x] = (byte)(hexValue[char.ToUpper(hex[i + 0]) - '0'] << 4 |
+								  hexValue[char.ToUpper(hex[i + 1]) - '0']);
 			}
 
 			return bytes;

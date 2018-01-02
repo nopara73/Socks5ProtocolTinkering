@@ -11,15 +11,17 @@ using System.Threading.Tasks;
 
 namespace Socks5ProtocolTinkering
 {
-    class Program
-    {
+	class Program
+	{
 #pragma warning disable IDE1006 // Naming Styles
 		static async Task Main(string[] args)
 #pragma warning restore IDE1006 // Naming Styles
 		{
-			var manager = new TorSocks5Manager(new IPEndPoint(IPAddress.Loopback, 9050));
+			try
+			{
+				var manager = new TorSocks5Manager(new IPEndPoint(IPAddress.Loopback, 9050));
 
-			var connectionTasks = new HashSet<Task<TorSocks5Client>>
+				var connectionTasks = new HashSet<Task<TorSocks5Client>>
 			{
 				manager.EstablishTcpConnectionAsync("google.com", 80),
 				manager.EstablishTcpConnectionAsync("penis.com", 80),
@@ -31,18 +33,24 @@ namespace Socks5ProtocolTinkering
 				manager.EstablishTcpConnectionAsync(new IPEndPoint(IPAddress.Parse("192.64.147.228"), 80)),
 				manager.EstablishTcpConnectionAsync("google.com", 443)
 			};
-			Console.WriteLine(await manager.ReverseResolveAsync(IPAddress.Parse("192.64.147.228")));
-			Console.WriteLine(await manager.ResolveAsync("google.com", false));
+				Console.WriteLine(await manager.ReverseResolveAsync(IPAddress.Parse("192.64.147.228")));
+				Console.WriteLine(await manager.ResolveAsync("google.com", false));
 
-			foreach(var connTask in connectionTasks)
+				foreach (var connTask in connectionTasks)
+				{
+					TorSocks5Client client = await connTask;
+					Console.WriteLine($"Connected to: {client.Destination}");
+					client.Dispose();
+				}
+			}
+			catch (Exception ex)
 			{
-				TorSocks5Client client = await connTask;
-				Console.WriteLine($"Connected to: {client.Destination}");
-				client.Dispose();
+				Console.WriteLine(ex);
 			}
 
+			Console.WriteLine();
 			Console.WriteLine("Press a key to exit...");
 			Console.ReadKey();
 		}
-    }
+	}
 }

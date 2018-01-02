@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using Socks5ProtocolTinkering.Models.Fields.OctetFields;
 using System;
 using System.Collections.Generic;
@@ -38,7 +39,8 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public MethodsField(params MethodField[] methods)
 		{
-			if (methods == null || methods.Length == 0) throw new ArgumentException(nameof(methods));
+			Guard.NotNullOrEmpty(nameof(methods), methods);
+
 			int count = methods.Length;
 			Bytes = new byte[count];
 			for (int i = 0; i < count; i++)
@@ -53,10 +55,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public override void FromBytes(byte[] bytes)
 		{
-			if(bytes == null)
-			{
-				throw new ArgumentNullException(nameof(bytes));
-			}
+			Guard.NotNullOrEmpty(nameof(bytes), bytes);
 
 			foreach(var b in bytes)
 			{

@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Interfaces;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -32,10 +33,7 @@ namespace Socks5ProtocolTinkering.Models.Bases
 
 		public void FromHex(string hex)
 		{
-			if (hex == null)
-			{
-				throw new ArgumentNullException(nameof(hex));
-			}
+			hex = Guard.NotNullOrEmptyOrWhitespace(nameof(hex), hex, true);
 
 			byte[] bytes = ByteHelpers.FromHex(hex);
 			if (bytes.Length != 1)

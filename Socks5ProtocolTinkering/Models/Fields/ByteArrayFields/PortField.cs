@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +26,9 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public PortField(int dstPort)
 		{
-		   var bytes = BitConverter.GetBytes(dstPort);
+			Guard.MinimumAndNotNull(nameof(dstPort), dstPort, 0);
+
+		    var bytes = BitConverter.GetBytes(dstPort);
 			if(bytes[2] != 0 || bytes[3] != 0)
 			{
 				throw new ArgumentOutOfRangeException(nameof(dstPort));
@@ -39,14 +42,11 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		#region Serialization
 
-		public override void FromBytes(byte[] bytes) => Bytes = bytes ?? throw new ArgumentNullException(nameof(bytes));
+		public override void FromBytes(byte[] bytes) => Bytes = Guard.NotNullOrEmpty(nameof(bytes), bytes);
 
 		public override byte[] ToBytes() => Bytes;
 
-		public override string ToString()
-		{
-			return DstPort.ToString();
-		}
+		public override string ToString() => DstPort.ToString();
 
 		#endregion
 	}

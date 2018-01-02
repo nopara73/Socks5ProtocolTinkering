@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using Socks5ProtocolTinkering.Models.Fields.OctetFields;
 using System;
 using System.Collections.Generic;
@@ -53,7 +54,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 		/// <param name="dstAddr">domain or ipv4</param>
 		public AddrField(string dstAddr)
 		{
-			if (string.IsNullOrWhiteSpace(dstAddr)) throw new ArgumentException(nameof(dstAddr));
+			dstAddr = Guard.NotNullOrEmptyOrWhitespace(nameof(dstAddr), dstAddr, true);
 
 			var atyp = new AtypField();
 			atyp.FromDstAddr(dstAddr);
@@ -116,11 +117,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public override void FromBytes(byte[] bytes)
 		{
-			Bytes = bytes ?? throw new ArgumentNullException(nameof(bytes));
-			if (bytes.Length == 0)
-			{
-				throw new ArgumentException(nameof(bytes));
-			}
+			Bytes = Guard.NotNullOrEmpty(nameof(bytes), bytes);
 
 			AtypField atyp;
 			if (bytes.First() == bytes.Length - 1 && bytes.Length != 4)

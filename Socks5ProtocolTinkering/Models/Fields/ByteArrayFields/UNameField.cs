@@ -1,4 +1,5 @@
-﻿using Socks5ProtocolTinkering.Models.Bases;
+﻿using Socks5ProtocolTinkering.Helpers;
+using Socks5ProtocolTinkering.Models.Bases;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -24,7 +25,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		public UNameField(string uName)
 		{
-			if (string.IsNullOrEmpty(uName)) throw new ArgumentException(nameof(uName));
+			Guard.NotNullOrEmpty(nameof(uName), uName);
 			Bytes = Encoding.UTF8.GetBytes(uName);
 		}
 
@@ -32,7 +33,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 
 		#region Serialization
 
-		public override void FromBytes(byte[] bytes) => Bytes = bytes ?? throw new ArgumentNullException(nameof(bytes));
+		public override void FromBytes(byte[] bytes) => Bytes = Guard.NotNullOrEmpty(nameof(bytes), bytes);
 
 		public override byte[] ToBytes() => Bytes;
 
