@@ -1,4 +1,4 @@
-﻿using Socks5ProtocolTinkering.Models.Fields.OctetFields;
+﻿using Socks5ProtocolTinkering.TorSocks5.Models.Fields.OctetFields;
 using System;
 using System.Collections.Generic;
 using System.Text;

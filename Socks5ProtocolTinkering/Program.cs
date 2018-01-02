@@ -3,7 +3,8 @@
 // https://gitweb.torproject.org/torspec.git/plain/socks-extensions.txt
 
 using Socks5ProtocolTinkering.Exceptions;
-using Socks5ProtocolTinkering.Models;
+using Socks5ProtocolTinkering.TorSocks5;
+using Socks5ProtocolTinkering.TorSocks5.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
