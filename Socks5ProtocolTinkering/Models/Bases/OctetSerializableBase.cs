@@ -38,7 +38,7 @@ namespace Socks5ProtocolTinkering.Models.Bases
 			byte[] bytes = ByteHelpers.FromHex(hex);
 			if (bytes.Length != 1)
 			{
-				throw new ArgumentException(nameof(hex));
+				throw new FormatException($"`{nameof(hex)}` must be exactly one byte. Actual: `{bytes.Length}` bytes. Value: `{hex}`.");
 			}
 
 			ByteValue = bytes[0];

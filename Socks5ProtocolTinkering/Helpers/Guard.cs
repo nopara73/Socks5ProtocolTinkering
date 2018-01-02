@@ -82,7 +82,7 @@ namespace Socks5ProtocolTinkering.Helpers
 
 			if (value < smallest)
 			{
-				throw new ArgumentOutOfRangeException(parameterName, value, $"Parameter cannot be less than '{smallest}'.");
+				throw new ArgumentOutOfRangeException(parameterName, value, $"Parameter cannot be less than `{smallest}`.");
 			}
 
 			return (int)value;
@@ -94,7 +94,7 @@ namespace Socks5ProtocolTinkering.Helpers
 
 			if (value > greatest)
 			{
-				throw new ArgumentOutOfRangeException(parameterName, value, $"Parameter cannot be greater than '{greatest}'.");
+				throw new ArgumentOutOfRangeException(parameterName, value, $"Parameter cannot be greater than `{greatest}`.");
 			}
 
 			return (int)value;

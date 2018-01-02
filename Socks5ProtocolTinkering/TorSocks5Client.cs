@@ -1,4 +1,5 @@
 ﻿using Nito.AsyncEx;
+using Socks5ProtocolTinkering.Exceptions;
 using Socks5ProtocolTinkering.Helpers;
 using Socks5ProtocolTinkering.Models;
 using Socks5ProtocolTinkering.Models.Fields.ByteArrayFields;
@@ -195,7 +196,7 @@ namespace Socks5ProtocolTinkering
 		{
 			if (!IsConnected)
 			{
-				throw new Exception($"{nameof(TorSocks5Client)} is not connected");
+				throw new ConnectionException($"`{nameof(TorSocks5Client)}` is not connected to `{TorSocks5EndPoint}`.");
 			}
 		}
 

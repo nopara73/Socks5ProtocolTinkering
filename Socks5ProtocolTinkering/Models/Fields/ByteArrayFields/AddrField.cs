@@ -26,7 +26,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 				{
 					return Encoding.ASCII.GetString(Bytes.Skip(1).ToArray()); // UTF8 result in general SOCKS server failure
 				}
-				else if (Atyp == AtypField.IpV4)
+				else if (Atyp == AtypField.IPv4)
 				{
 					var values = new string[4];
 					for (int i = 0; i < 4; i++)
@@ -72,18 +72,18 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 				var numberOfOctets = domainBytes.Length;
 				if (numberOfOctets > 255)
 				{
-					throw new ArgumentOutOfRangeException(nameof(dstAddr));
+					throw new FormatException($"`{nameof(dstAddr)}` can be maximum 255 octets. Actual: `{numberOfOctets}` octets. Value: `{dstAddr}`.");
 				}
 
 				bytes = ByteHelpers.Combine(new byte[] { (byte)numberOfOctets }, domainBytes);
 			}
-			else if(atyp == AtypField.IpV4)
+			else if(atyp == AtypField.IPv4)
 			{
 				// the address is a version-4 IP address, with a length of 4 octets
 				var parts = dstAddr.Split(".", StringSplitOptions.RemoveEmptyEntries);
 				if(parts.Length != 4 || parts.Any(x => string.IsNullOrWhiteSpace(x)))
 				{
-					throw new ArgumentException(nameof(dstAddr));
+					throw new FormatException($"`{nameof(dstAddr)}` must be have 4 parts. Actual: `{parts.Length}` parts. Value: `{dstAddr}`.");
 				}
 
 				bytes = new byte[4];
@@ -93,19 +93,19 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 					{
 						if(partInt < 0 || partInt > 255)
 						{
-							throw new ArgumentException(nameof(dstAddr));
+							throw new FormatException($"`Every part of `{nameof(dstAddr)}` must be between 0 and 255. The {i}. part is invalid: `{partInt}`. Value of `{nameof(dstAddr)}`: `{dstAddr}`");
 						}
 						bytes[i] = (byte)partInt;
 					}
 					else
 					{
-						throw new ArgumentException(nameof(dstAddr));
+						throw new FormatException($"Couldn't parse the {i}. part of `{nameof(dstAddr)}` to int. Invalid part: `{partInt}`. Value of `{nameof(dstAddr)}`: `{dstAddr}`.");
 					}
 				}
 			}
 			else
 			{
-				throw new ArgumentException(dstAddr);
+				throw new NotSupportedException($"`{nameof(atyp)}` is not supported. Value: `{atyp}`.");
 			}
 
 			Bytes = bytes;
@@ -126,11 +126,11 @@ namespace Socks5ProtocolTinkering.Models.Fields.ByteArrayFields
 			}
 			else if(bytes.Length == 4)
 			{
-				atyp = AtypField.IpV4;
+				atyp = AtypField.IPv4;
 			}
 			else
 			{
-				throw new ArgumentException(nameof(bytes));
+				throw new FormatException($"Couldn't read IPv4 or domain name from `{nameof(bytes)}`. Value: `{bytes}`.");
 			}
 
 			Atyp = atyp;

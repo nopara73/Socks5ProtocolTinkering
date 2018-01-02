@@ -16,7 +16,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 		// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt
 		// IPv6 is not supported in CONNECT commands.
 
-		public static AtypField IpV4
+		public static AtypField IPv4
 		{
 			get
 			{
@@ -59,7 +59,7 @@ namespace Socks5ProtocolTinkering.Models.Fields.OctetFields
 				{
 					throw new ArgumentException(nameof(dstAddr));
 				}
-				ByteValue = IpV4.ToByte();
+				ByteValue = IPv4.ToByte();
 			}
 			else
 			{
